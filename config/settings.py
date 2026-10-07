@@ -37,6 +37,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "https://34da-110-139-53-44.ngrok-free.app",
     "https://wa-backend-production-96f0.up.railway.app",
+    "https://dashboard-multi-whatsapp-production.up.railway.app",
 ]
 if os.environ.get("BEHIND_PROXY") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
