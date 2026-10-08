@@ -69,3 +69,20 @@ class TemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MessageTemplate
         fields = ["id", "name", "language", "category", "status", "body"]
+
+
+class TemplateCreateSerializer(serializers.Serializer):
+    name = serializers.RegexField(
+        r"^[a-z0-9_]{1,100}$",
+        error_messages={"invalid": "Nama hanya boleh huruf kecil, angka, dan garis bawah (_)."},
+    )
+    language = serializers.CharField(default="id", max_length=10)
+    category = serializers.ChoiceField(choices=["UTILITY", "MARKETING"])
+    body = serializers.CharField(max_length=1024)
+ 
+    def validate_body(self, v):
+        v = v.strip()
+        if "{{" in v:
+            # send_template() saat ini tidak mengirim parameter, jadi template berisi variabel tidak bisa terkirim
+            raise serializers.ValidationError("Variabel {{1}} belum didukung. Tulis isi pesan tanpa variabel.")
+        return v

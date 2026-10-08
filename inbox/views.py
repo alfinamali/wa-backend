@@ -384,3 +384,35 @@ class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({"synced": sync_templates()})
         except whatsapp.WhatsAppError as e:
             return Response({"detail": str(e)}, status=502)
+
+
+
+class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = TemplateSerializer
+    queryset = MessageTemplate.objects.order_by("name")
+ 
+    def get_permissions(self):
+        return [IsAdminUser()] if self.action == "create" else super().get_permissions()
+ 
+    def create(self, request, *a, **kw):
+        """Ajukan template baru ke Meta lalu simpan lokal (status awal pending)."""
+        s = TemplateCreateSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        try:
+            res = whatsapp.create_template(d["name"], d["language"], d["category"], d["body"])
+        except whatsapp.WhatsAppError as e:
+            return Response({"detail": str(e)}, status=502)
+        tpl, _ = MessageTemplate.objects.update_or_create(
+            name=d["name"], language=d["language"],
+            defaults={"category": d["category"], "body": d["body"],
+                      "status": str(res.get("status", "PENDING")).lower()},
+        )
+        return Response(TemplateSerializer(tpl).data, status=201)
+ 
+    @action(detail=False, methods=["post"], permission_classes=[IsAdminUser])
+    def sync(self, request):
+        try:
+            return Response({"synced": sync_templates()})
+        except whatsapp.WhatsAppError as e:
+            return Response({"detail": str(e)}, status=502)

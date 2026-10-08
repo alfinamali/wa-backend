@@ -78,3 +78,27 @@ def fetch_templates():
         out.append({"name": t["name"], "language": t.get("language", "id"), "category": t.get("category", ""),
                     "status": t.get("status", "").lower(), "body": body})
     return out
+
+
+def create_template(name, language, category, body):
+    """Buat template di Meta (POST /{WABA_ID}/message_templates). Status awal PENDING."""
+    url = f"https://graph.facebook.com/{settings.WA_GRAPH_VERSION}/{settings.WA_WABA_ID}/message_templates"
+    payload = {
+        "name": name,
+        "language": language,
+        "category": category,
+        "components": [{"type": "BODY", "text": body}],
+    }
+    try:
+        r = requests.post(url, json=payload, timeout=20,
+                          headers={"Authorization": f"Bearer {settings.WA_TOKEN}"})
+    except requests.RequestException as e:
+        raise WhatsAppError(f"Gagal menghubungi Meta: {e}") from e
+    try:
+        data = r.json()
+    except ValueError:
+        data = {}
+    if not r.ok:
+        err = data.get("error", {})
+        raise WhatsAppError(err.get("error_user_msg") or err.get("message") or f"HTTP {r.status_code}")
+    return data  # {"id": "...", "status": "PENDING", "category": "UTILITY"}
