@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 try:
@@ -67,7 +68,21 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "config.wsgi.application"
 
-if os.environ.get("DB_HOST"):
+url = os.environ.get('DATABASE_URL')
+if url:
+    parsed = urlparse(url)
+    u = urlparse(url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': u.path.lstrip('/'),
+            'USER': u.username,
+            'PASSWORD': u.password,
+            'HOST': u.hostname,
+            'PORT': u.port or 5432,
+        }
+    }
+elif os.environ.get("DB_HOST"):
     DATABASES = {"default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("DB_NAME", "wa"), "USER": os.environ.get("DB_USER", "wa"),
