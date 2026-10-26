@@ -13,13 +13,15 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
 from . import whatsapp
-from .models import WINDOW, Contact, Conversation, Message, MessageTemplate, Outlet
-from .serializers import (ContactSerializer, ConversationSerializer, MessageSerializer, OutletSerializer,
-                          StartConversationSerializer, TemplateSerializer)
-from .services import process_payload, sync_templates
+from .models import WINDOW, Contact, Conversation, Message, MessageTemplate, Outlet, Profile
+from .serializers import (ContactSerializer, ConversationSerializer, EmbeddedSignupSerializer, MessageSerializer,
+                          OutletSerializer, PasswordChangeSerializer, ProfileUpdateSerializer,
+                          StartConversationSerializer, TemplateCreateSerializer, TemplateSerializer)
+from .services import onboard, process_payload, request_coexist_sync, sync_templates
 
 log = logging.getLogger(__name__)
 LIMIT = 200
@@ -76,11 +78,53 @@ def webhook(request):
 
 
 # ---------------- API ----------------
-@api_view(["GET"])
+def me_data(u):
+    profile, _ = Profile.objects.get_or_create(user=u)
+    return {"id": u.id, "username": u.username, "name": u.get_full_name() or u.username,
+            "first_name": u.first_name, "last_name": u.last_name, "email": u.email,
+            "is_staff": u.is_staff, "role": "Admin" if u.is_staff else "Agen",
+            "preferences": profile.prefs(),
+            "outlets": list(visible_outlets(u).values_list("id", flat=True))}
+
+
+@api_view(["GET", "PATCH"])
 def me(request):
+    """GET profil. PATCH {name?, email?, preferences?: {notif, sound}}."""
     u = request.user
-    return Response({"id": u.id, "username": u.username, "name": u.get_full_name() or u.username, "is_staff": u.is_staff,
-                     "outlets": list(visible_outlets(u).values_list("id", flat=True))})
+    if request.method == "PATCH":
+        s = ProfileUpdateSerializer(data=request.data, partial=True)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        if "name" in d:
+            first, _, last = d["name"].strip().partition(" ")
+            u.first_name, u.last_name = first[:150], last[:150]
+        if "email" in d:
+            u.email = d["email"]
+        u.save(update_fields=["first_name", "last_name", "email"])
+        if "preferences" in d:
+            profile, _ = Profile.objects.get_or_create(user=u)
+            allowed = {k: bool(v) for k, v in d["preferences"].items() if k in Profile.DEFAULTS}
+            profile.preferences = {**(profile.preferences or {}), **allowed}
+            profile.save(update_fields=["preferences"])
+    return Response(me_data(u))
+
+
+@api_view(["POST"])
+def logout(request):
+    """Hapus token di server. Token DRF satu per user, jadi semua perangkat user ini ikut keluar."""
+    Token.objects.filter(user=request.user).delete()
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+def change_password(request):
+    s = PasswordChangeSerializer(data=request.data, context={"user": request.user})
+    s.is_valid(raise_exception=True)
+    u = request.user
+    u.set_password(s.validated_data["new_password"])
+    u.save(update_fields=["password"])
+    Token.objects.filter(user=u).delete()  # perangkat lain wajib login ulang
+    return Response({"token": Token.objects.create(user=u).key})
 
 
 @api_view(["GET"])
@@ -129,11 +173,52 @@ def stats(request):
     })
 
 
-class OutletViewSet(viewsets.ReadOnlyModelViewSet):
+class OutletViewSet(viewsets.ModelViewSet):
+    """Baca: semua user (sesuai akses). Tambah/ubah/hapus dan hubungkan nomor: khusus staf."""
     serializer_class = OutletSerializer
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_permissions(self):
+        return [IsAuthenticated()] if self.action in ("list", "retrieve") else [IsAdminUser()]
 
     def get_queryset(self):
-        return visible_outlets(self.request.user).annotate(unread=Coalesce(Sum("conversations__unread_count"), 0))
+        return (visible_outlets(self.request.user).select_related("account")
+                .annotate(unread=Coalesce(Sum("conversations__unread_count"), 0)))
+
+    def destroy(self, request, *a, **kw):
+        outlet = self.get_object()
+        if outlet.conversations.exists():
+            return Response({"detail": "Outlet masih punya percakapan. Nonaktifkan saja."}, status=409)
+        return super().destroy(request, *a, **kw)
+
+    @action(detail=False, methods=["post"], url_path="embedded-signup")
+    def embedded_signup(self, request):
+        """Dipanggil frontend setelah FB.login selesai. `code` hanya berlaku ~30 detik."""
+        s = EmbeddedSignupSerializer(data=request.data)
+        if not s.is_valid():
+            log.warning("Embedded signup ditolak: %s (field terkirim: %s)", s.errors, sorted(request.data.keys()))
+            return Response(s.errors, status=400)
+        d = s.validated_data
+        outlet = get_object_or_404(Outlet, pk=d["outlet"]) if d.get("outlet") else None
+        try:
+            outlet, warnings = onboard(code=d["code"], waba_id=d["waba_id"], phone_number_id=d["phone_number_id"],
+                                       business_id=d["business_id"], event=d["event"], outlet=outlet,
+                                       name=d["name"], city=d["city"])
+        except whatsapp.WhatsAppError as e:
+            log.warning("Embedded signup gagal: %s", e)
+            return Response({"detail": str(e)}, status=502)
+        outlet = self.get_queryset().get(pk=outlet.pk)
+        return Response({"outlet": OutletSerializer(outlet).data, "warnings": warnings}, status=201)
+
+    @action(detail=True, methods=["post"])
+    def sync(self, request, pk=None):
+        """Ulangi permintaan sinkron kontak/riwayat HP yang gagal (batas 24 jam setelah onboarding)."""
+        outlet = self.get_object()
+        if outlet.mode != Outlet.Mode.COEXIST:
+            return Response({"detail": "Outlet ini tidak terhubung dengan aplikasi WhatsApp Business."}, status=400)
+        errors = request_coexist_sync(outlet)
+        return Response({"errors": errors, "outlet": OutletSerializer(self.get_queryset().get(pk=outlet.pk)).data},
+                        status=502 if errors else 200)
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -206,6 +291,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
             tpl = MessageTemplate.objects.filter(
                 pk=tpl_id,
                 status="approved",
+                waba_id__in=template_wabas(conv.outlet),
             ).first()
 
             if not tpl:
@@ -263,12 +349,14 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     to,
                     tpl.name,
                     tpl.language,
+                    token=conv.outlet.token,
                 )
             else:
                 wamid = whatsapp.send_text(
                     pnid,
                     to,
                     text,
+                    token=conv.outlet.token,
                 )
 
         except whatsapp.WhatsAppError as e:
@@ -374,42 +462,45 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(self.get_queryset()[:LIMIT], many=True).data)
 
 
-class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = TemplateSerializer
-    queryset = MessageTemplate.objects.order_by("name")
-
-    @action(detail=False, methods=["post"], permission_classes=[IsAdminUser])
-    def sync(self, request):
-        try:
-            return Response({"synced": sync_templates()})
-        except whatsapp.WhatsAppError as e:
-            return Response({"detail": str(e)}, status=502)
-
+def template_wabas(outlet):
+    """Template milik WABA outlet. Data lama (waba_id kosong) dianggap milik WABA default .env."""
+    w = outlet.waba_id
+    return [w, ""] if w == settings.WA_WABA_ID else [w]
 
 
 class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TemplateSerializer
-    queryset = MessageTemplate.objects.order_by("name")
- 
+
+    def get_queryset(self):
+        qs = MessageTemplate.objects.order_by("name")
+        outlet_id = self.request.query_params.get("outlet")
+        if outlet_id:
+            outlet = get_object_or_404(visible_outlets(self.request.user), pk=outlet_id)
+            qs = qs.filter(waba_id__in=template_wabas(outlet))
+        return qs
+
     def get_permissions(self):
         return [IsAdminUser()] if self.action == "create" else super().get_permissions()
- 
+
     def create(self, request, *a, **kw):
-        """Ajukan template baru ke Meta lalu simpan lokal (status awal pending)."""
+        """Ajukan template baru ke Meta (WABA outlet terpilih, atau WABA default) lalu simpan lokal."""
         s = TemplateCreateSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
+        outlet = get_object_or_404(Outlet, pk=d["outlet"]) if d.get("outlet") else None
+        waba_id = outlet.waba_id if outlet else settings.WA_WABA_ID
+        token = outlet.token if outlet else None
         try:
-            res = whatsapp.create_template(d["name"], d["language"], d["category"], d["body"])
+            res = whatsapp.create_template(d["name"], d["language"], d["category"], d["body"], waba_id, token)
         except whatsapp.WhatsAppError as e:
             return Response({"detail": str(e)}, status=502)
         tpl, _ = MessageTemplate.objects.update_or_create(
-            name=d["name"], language=d["language"],
+            waba_id=waba_id, name=d["name"], language=d["language"],
             defaults={"category": d["category"], "body": d["body"],
                       "status": str(res.get("status", "PENDING")).lower()},
         )
         return Response(TemplateSerializer(tpl).data, status=201)
- 
+
     @action(detail=False, methods=["post"], permission_classes=[IsAdminUser])
     def sync(self, request):
         try:

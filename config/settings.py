@@ -29,12 +29,14 @@ ALLOWED_HOSTS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
+    "https://localhost:3000",
     "http://localhost:8080",
     "https://34da-110-139-53-44.ngrok-free.app",
     "https://wa-backend-production-96f0.up.railway.app",
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://localhost:3000",  # npm run dev:https (Embedded Signup wajib HTTPS)
     "http://localhost:8080",
     "https://34da-110-139-53-44.ngrok-free.app",
     "https://wa-backend-production-96f0.up.railway.app",
@@ -110,4 +112,6 @@ WA_TOKEN = os.environ.get("WA_TOKEN", "")                  # token System User
 WA_APP_SECRET = os.environ.get("WA_APP_SECRET", "")        # App Settings > Basic
 WA_VERIFY_TOKEN = os.environ.get("WA_VERIFY_TOKEN", "")    # string bebas buatan Anda
 WA_WABA_ID = os.environ.get("WA_WABA_ID", "")              # untuk sinkron template
-WA_GRAPH_VERSION = os.environ.get("WA_GRAPH_VERSION", "v23.0")  # cek versi terbaru di dokumentasi Meta
+AUTO_REPLY_COOLDOWN_HOURS = float(os.environ.get("AUTO_REPLY_COOLDOWN_HOURS", "12"))  # jeda balasan otomatis per kontak
+WA_APP_ID = os.environ.get("WA_APP_ID", "")                # App ID, untuk tukar code Embedded Signup
+WA_GRAPH_VERSION = os.environ.get("WA_GRAPH_VERSION", "v26.0")  # cek versi terbaru di dokumentasi Meta

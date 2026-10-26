@@ -1,13 +1,20 @@
 from django.contrib import admin
 
-from .models import Contact, Conversation, Message, MessageTemplate, Outlet
+from .models import Contact, Conversation, Message, MessageTemplate, Outlet, Profile, WhatsAppAccount
 
 
 @admin.register(Outlet)
 class OutletAdmin(admin.ModelAdmin):
-    list_display = ("name", "city", "display_number", "phone_number_id", "is_active")
+    list_display = ("name", "city", "display_number", "phone_number_id", "mode", "account", "is_active")
+    list_filter = ("mode", "is_active")
     search_fields = ("name", "phone_number_id")
     filter_horizontal = ("members",)
+
+
+@admin.register(WhatsAppAccount)
+class WhatsAppAccountAdmin(admin.ModelAdmin):
+    list_display = ("name", "waba_id", "business_id", "created_at")
+    exclude = ("access_token",)  # token tidak ditampilkan
 
 
 @admin.register(Contact)
@@ -24,11 +31,16 @@ class ConversationAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ("created_at", "conversation", "direction", "type", "status", "is_template")
-    list_filter = ("direction", "status", "is_template")
+    list_display = ("created_at", "conversation", "direction", "source", "type", "status", "is_template")
+    list_filter = ("direction", "source", "status", "is_template")
     search_fields = ("body", "wamid")
 
 
 @admin.register(MessageTemplate)
 class MessageTemplateAdmin(admin.ModelAdmin):
-    list_display = ("name", "language", "category", "status")
+    list_display = ("name", "language", "category", "status", "waba_id")
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "preferences")

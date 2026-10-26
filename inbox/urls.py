@@ -13,7 +13,9 @@ router.register("templates", views.TemplateViewSet, basename="template")
 
 urlpatterns = [
     path("auth/login/", obtain_auth_token),
+    path("auth/logout/", views.logout),
     path("me/", views.me),
+    path("me/password/", views.change_password),
     path("stats/", views.stats),
     *router.urls,
 ]
