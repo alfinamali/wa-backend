@@ -1,0 +1,9 @@
+{% load site_brand %}
+{% get_site_config as site_config %}
+<footer class="content-footer footer bg-footer-theme">
+  <div class="container-fluid">
+    <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+      <div class="mb-2 mb-md-0">&#169; {% now "Y" %} {{ site_config.site_name }}</div>
+    </div>
+  </div>
+</footer>

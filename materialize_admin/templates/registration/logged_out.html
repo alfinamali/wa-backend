@@ -1,0 +1,18 @@
+{% extends "registration/base.html" %}
+
+{% load i18n %}
+
+{% block content %}
+<div
+  class="d-flex col-12 col-lg-5 col-xl-4 align-items-center authentication-bg position-relative py-sm-12 px-12 py-6">
+  <div class="w-px-400 mx-auto pt-12 pt-lg-0">
+    <h4 class="mb-1">{{ jazzmin_settings.welcome_sign }}</h4>
+    <p>
+      {% trans "Thanks for spending some quality time with the web site today." %}
+    </p>
+    <a class="btn {{ jazzmin_ui.button_classes.primary }} btn-sm w-100 btn-block" href="{% url 'admin:index' %}">
+      {% trans 'Log in again' %}
+    </a>
+  </div>
+</div>
+{% endblock %}

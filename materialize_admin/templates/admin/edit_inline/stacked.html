@@ -1,0 +1,83 @@
+{% load i18n admin_urls static %}
+<style>
+  .inline-deletelink {
+    float: right;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 5px;
+    background-color: #ff4d49;
+    font-size: 13px;
+    color: white;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    padding: 3px;
+  }
+
+  .add-row .addlink {
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 5px;
+    background-color: #4285f4;
+    font-size: 13px;
+    color: white;
+  }
+</style>
+<div class="js-inline-admin-formset inline-group border-top pt-3"
+    style="margin-left: -18px;margin-right: -18px;"
+     id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="stacked"
+     data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+  <fieldset class="module {{ inline_admin_formset.classes }}">
+    <div>
+      {{ inline_admin_formset.formset.management_form }}
+      {{ inline_admin_formset.formset.non_form_errors }}
+
+      {% for inline_admin_form in inline_admin_formset %}
+        <div class="card shadow-none bg-transparent border border-secondary text-secondary mb-3 inline-related{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}"
+             id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+          <div class="{% if not inline_admin_form.original %}new-stacked{% endif %}">
+            <div class="card-header text-bg-secondary p-3">
+              <h5 class="card-title text-white mb-0">
+                <span class="text-sm">
+                  {% if inline_admin_form.original %}
+                    {% if inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
+                      <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" 
+                         class="{% if inline_admin_formset.has_change_permission %}inlinechangelink{% else %}inlineviewlink{% endif %} text-white">
+                        {% if inline_admin_formset.has_change_permission %}
+                          <i class="ri ri-edit-line text-white"> </i>
+                        {% else %}
+                          <i class="ri ri-eye-2-fill text-white"> </i>
+                        {% endif %}
+                      </a>
+                    {% endif %}
+                    {{ inline_admin_form.original }}
+                  {% else %}
+                    <i class="ri ri-add-fill text-success"> </i>
+                    {% trans "New" %} {{ inline_admin_formset.opts.verbose_name|capfirst }}
+                  {% endif %}
+                </span>
+                {% if inline_admin_form.show_url %}
+                  <a href="{{ inline_admin_form.absolute_url }}" title="{% trans "View on site" %}">
+                    <i class="ri ri-eye-2-fill text-white"> </i>
+                  </a>
+                {% endif %}
+              </h5>
+            </div>
+            <div class="card-body pt-3">
+              {% if inline_admin_form.form.non_field_errors %}
+                {{ inline_admin_form.form.non_field_errors }}
+              {% endif %}
+              {% for fieldset in inline_admin_form %}
+                {% include "admin/includes/fieldset.html" %}
+              {% endfor %}
+              {% if inline_admin_form.needs_explicit_pk_field %}
+                {{ inline_admin_form.pk_field.field }}
+              {% endif %}
+              {% if inline_admin_form.fk_field %}
+                {{ inline_admin_form.fk_field.field }}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+</div>

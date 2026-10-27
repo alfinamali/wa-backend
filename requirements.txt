@@ -8,3 +8,4 @@ whitenoise>=6.7
 python-dotenv>=1.0
 dj-database-url>=2.2
 redis>=5.0
+django-jazzmin==3.0.1

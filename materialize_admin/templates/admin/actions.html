@@ -1,0 +1,53 @@
+{% load i18n jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<div class="actions d-flex flex-column flex-md-row align-items-md-center my-1">
+    {% block actions %}
+        {% block actions-form %}
+            {% for field in action_form %}
+                {% if field.is_hidden %}
+                    {{ field }}
+                {% else %}
+                    <div class="d-flex flex-column flex-md-row align-items-md-center me-2" style="min-width: 25%;">
+                        <label for="action-select" class="form-label me-1">{{ field.label }}</label>
+                        <select id="action-select" name="action" class="form-select selectpicker">
+                            {% for option in field.field.choices %}
+                                <option value="{{ option.0 }}" {% if forloop.first %}selected{% endif %}>
+                                    {{ option.1 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+        {% block actions-submit %}
+            <button type="submit"
+                class="btn btn-sm btn-primary waves-effect waves-light w-md-100 w-md-auto mt-2 mt-md-0 mx-0 mx-md-3 {{ jazzmin_ui.button_classes.primary }}"
+                title="{% trans "Run the selected action" %}"
+                name="index"
+                value="{{ action_index|default:0 }}">
+                <span class="icon-base ri ri-send-plane-2-fill icon-16px me-1"></span>
+                Proses
+            </button>
+        {% endblock %}
+        {% block actions-counter %}
+            {% if actions_selection_counter %}
+                <span
+                    class="action-counter mt-2 mt-md-0 ms-md-2"
+                    data-actions-icnt="{{ cl.result_list|length }}">
+                    {{ selection_note }}
+                </span>
+                {% if cl.result_count != cl.result_list|length %}
+                    <span class="all hidden">{{ selection_note_all }}</span>
+                    <span class="question hidden">
+                        <a href="#" title="{% trans "Click here to select the objects across all pages" %}">
+                            {% blocktrans with cl.result_count as total_count %}Select all {{ total_count }} {{ module_name }}{% endblocktrans %}
+                        </a>
+                    </span>
+                    <span class="clear" style="display: none;"><a href="#">{% trans "Clear selection" %}</a></span>
+                {% endif %}
+            {% endif %}
+        {% endblock %}
+    {% endblock %}
+</div>

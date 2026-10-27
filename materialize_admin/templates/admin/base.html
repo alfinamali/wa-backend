@@ -1,0 +1,544 @@
+{% load i18n static jazzmin admin_urls menus site_brand %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% get_site_config as site_config %}
+
+<!DOCTYPE html>
+
+<html
+  lang="id"
+  class="layout-navbar-fixed layout-menu-fixed layout-wide {% if is_popup%}layout-menu-collapsed{% endif %} "
+  dir="ltr"
+  data-skin="default"
+  data-bs-theme="light"
+  data-assets-path="{% static 'materialize_admin/assets/' %}"
+  data-template="vertical-menu-template">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="id">
+    <title>{% block title %}{{ title }} | {{ jazzmin_settings.site_title }}{% endblock %}</title>
+
+    <meta name="description" content="{{ jazzmin_settings.site_description|default:'' }}" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ site_config.logo_url }}" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&ampdisplay=swap"
+      rel="stylesheet" />
+
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/fonts/iconify-icons.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/node-waves/node-waves.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/pickr/pickr-themes.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/css/demo.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/toastr/toastr.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/animate-css/animate.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/sweetalert2/sweetalert2.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/notyf/notyf.css' %}" />
+
+    <script src="{% static 'materialize_admin/assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/js/template-customizer.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/js/config.js' %}?v=1"></script>
+    <style>
+      body {
+        font-size: 14px;
+      }
+
+      .breadcrumb.breadcrumb-custom-icon {
+        font-size: 14px;
+      }
+
+      .select2-dropdown.select2-dropdown--below, .select2-dropdown.select2-dropdown--above {
+        z-index: 9999 !important;
+      }
+    </style>
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %} {% endblock %}
+    {% block extracustomstyle %} {% endblock %}
+  </head>
+
+  <body class="hold-transition {% if not jazzmin_settings.show_sidebar %} no-sidebar{% else %} sidebar-mini{% endif %} {% sidebar_status request %} {% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} {{ jazzmin_ui.body_classes }} {% if jazzmin_ui.dark_mode_theme %}theme-dark{% endif %}" data-admin-utc-offset="{% now "Z" %}">
+    {% block body %} {% endblock %}
+    <!-- Layout wrapper -->
+    <div class="layout-wrapper layout-content-navbar {% if is_popup %}layout-without-menu{% endif %}">
+      <div class="layout-container">
+        <!-- Menu -->
+        {% if not is_popup %}
+        <aside id="layout-menu" class="layout-menu menu-vertical menu">
+          <div class="app-brand demo bg-primary text-white">
+
+            <a href="{% url 'admin:index' %}" class="app-brand-link">
+              <span class="app-brand-logo demo ms-1">
+                {% include 'admin/brand_logo.html' %}
+              </span>
+              <span class="app-brand-text demo menu-text fw-semibold ms-2 text-white">{{ site_config.site_name }}</span>
+            </a>
+
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M8.47365 11.7183C8.11707 12.0749 8.11707 12.6531 8.47365 13.0097L12.071 16.607C12.4615 16.9975 12.4615 17.6305 12.071 18.021C11.6805 18.4115 11.0475 18.4115 10.657 18.021L5.83009 13.1941C5.37164 12.7356 5.37164 11.9924 5.83009 11.5339L10.657 6.707C11.0475 6.31653 11.6805 6.31653 12.071 6.707C12.4615 7.09747 12.4615 7.73053 12.071 8.121L8.47365 11.7183Z"
+                  fill-opacity="0.9" />
+                <path
+                  d="M14.3584 11.8336C14.0654 12.1266 14.0654 12.6014 14.3584 12.8944L18.071 16.607C18.4615 16.9975 18.4615 17.6305 18.071 18.021C17.6805 18.4115 17.0475 18.4115 16.657 18.021L11.6819 13.0459C11.3053 12.6693 11.3053 12.0587 11.6819 11.6821L16.657 6.707C17.0475 6.31653 17.6805 6.31653 18.071 6.707C18.4615 7.09747 18.4615 7.73053 18.071 8.121L14.3584 11.8336Z"
+                  fill-opacity="0.4" />
+              </svg>
+            </a>
+          </div>
+
+          <div class="menu-inner-shadow"></div>
+
+          <ul class="menu-inner py-1">
+            {% get_menus request.user request.path %}
+          </ul>
+        </aside>
+
+        <div class="menu-mobile-toggler d-xl-none rounded-1">
+          <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large text-bg-secondary p-2 rounded-1">
+            <i class="ri ri-menu-line icon-base"></i>
+            <i class="ri ri-arrow-right-s-line icon-base"></i>
+          </a>
+        </div>
+        {% endif %}
+        <!-- / Menu -->
+
+        <!-- Layout container -->
+        <div class="layout-page">
+          {% if not is_popup %}
+          <!-- Navbar -->
+          <nav
+            class="layout-navbar container-fluid navbar-detached navbar navbar-expand-xl align-items-center bg-navbar-theme bg-primary"
+            id="layout-navbar">
+            <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 me-xl-0 d-xl-none">
+              <a class="nav-item nav-link px-0 me-xl-6" href="javascript:void(0)">
+                <i class="icon-base ri ri-menu-line icon-22px"></i>
+              </a>
+            </div>
+
+            <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+              <!-- Search -->
+              <div class="navbar-nav align-items-center">
+                <div class="nav-item navbar-search-wrapper mb-0">
+                  <a class="nav-item nav-link search-toggler px-0" href="javascript:void(0);">
+                    <span class="d-inline-block text-body-secondary fw-normal" id="autocomplete"></span>
+                  </a>
+                </div>
+              </div>
+              <!-- /Search -->
+
+              <ul class="navbar-nav flex-row align-items-center ms-md-auto">
+                <!-- Style Switcher -->
+                <li class="nav-item dropdown me-sm-2 me-xl-0">
+                  <a
+                    class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
+                    id="nav-theme"
+                    href="javascript:void(0);"
+                    data-bs-toggle="dropdown">
+                    <i class="icon-base ri ri-sun-line icon-22px theme-icon-active"></i>
+                    <span class="d-none ms-2" id="nav-theme-text">Toggle theme</span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-theme-text">
+                    <li>
+                      <button
+                        type="button"
+                        class="dropdown-item align-items-center active"
+                        data-bs-theme-value="light"
+                        aria-pressed="false">
+                        <span><i class="icon-base ri ri-sun-line icon-22px me-3" data-icon="sun-line"></i>Light</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        class="dropdown-item align-items-center"
+                        data-bs-theme-value="dark"
+                        aria-pressed="true">
+                        <span
+                          ><i class="icon-base ri ri-moon-clear-line icon-22px me-3" data-icon="moon-clear-line"></i
+                          >Dark</span
+                        >
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        class="dropdown-item align-items-center"
+                        data-bs-theme-value="system"
+                        aria-pressed="false">
+                        <span
+                          ><i class="icon-base ri ri-computer-line icon-22px me-3" data-icon="computer-line"></i
+                          >System</span
+                        >
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+                <!-- / Style Switcher-->
+
+                <!-- Quick links -->
+                <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-sm-2 me-xl-0">
+                  <a
+                    class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
+                    href="javascript:void(0);"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false">
+                    <i class="icon-base ri ri-star-smile-line icon-22px"></i>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-end p-0">
+                    <div class="dropdown-menu-header border-bottom">
+                      <div class="dropdown-header d-flex align-items-center py-3">
+                        <h6 class="mb-0 me-auto">Shortcuts</h6>
+                      </div>
+                    </div>
+                    <div class="dropdown-shortcuts-list scrollable-container">
+                      <div class="row row-bordered overflow-visible g-0">
+                        {% get_user_menu user request.current_app|default:"admin" as user_menu %}
+                        {% for link in user_menu %}
+                        <div class="dropdown-shortcuts-item col">
+                          <span class="dropdown-shortcuts-icon rounded-circle mb-3">
+                            <i class="icon-base ri ri-calendar-line icon-26px text-heading"></i>
+                          </span>
+                          <a href="{{ link.url }}" class="stretched-link" {% if link.new_window %}target="_blank"{% endif %}>{% trans link.name %}</a>
+                          <small>{{ link.description }}</small>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <!-- Quick links -->
+
+                <!-- Notification: dihapus (fitur notifikasi backend-pusat) -->
+
+                <!-- User -->
+                <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                  <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <div class="avatar avatar-online">
+                      <img src="{% static 'materialize_admin/assets/img/avatars/1.png' %}" alt="avatar" class="rounded-circle" />
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end mt-3 py-2">
+                    <li>
+                      <a class="dropdown-item" href="javascript:void(0);">
+                        <div class="d-flex align-items-center">
+                          <div class="flex-shrink-0 me-2">
+                            <div class="avatar avatar-online">
+                              <img
+                                src="{% static 'materialize_admin/assets/img/avatars/1.png' %}"
+                                alt="alt"
+                                class="w-px-40 h-auto rounded-circle" />
+                            </div>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="mb-0 small">{{ request.user.get_full_name }}</h6>
+                            <small class="text-body-secondary">
+                              {% if request.user.is_superuser %}Superuser{% else %}{{ request.user.username }}{% endif %}</small>
+                          </div>
+                        </div>
+                      </a>
+                    </li>
+                    <li>
+                      <div class="dropdown-divider"></div>
+                    </li>
+                    {% if perms|can_view_self %}
+                    <li>
+                      <a class="dropdown-item" href="{% jazzy_admin_url request.user request.current_app|default:"admin" %}">
+                        <i class="icon-base ri ri-user-3-line icon-22px me-3"></i
+                        ><span class="align-middle">My Profile</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                      <a class="dropdown-item" href="{% url 'admin:password_change' %}">
+                        <span class="d-flex align-items-center align-middle">
+                          <i class="flex-shrink-0 icon-base ri ri-shield-keyhole-line icon-22px me-3"></i>
+                          <span class="flex-grow-1 align-middle">{% trans 'Change password' %}</span>
+                        </span>
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="javascript:void(0);">
+                        <i class="icon-base ri ri-settings-4-line icon-22px me-3"></i
+                        ><span class="align-middle">Settings</span>
+                      </a>
+                    </li>
+                    <li>
+                      <div class="dropdown-divider"></div>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="javascript:void(0);">
+                        <i class="icon-base ri ri-question-line icon-22px me-3"></i
+                        ><span class="align-middle">FAQ</span>
+                      </a>
+                    </li>
+                    <li>
+                      <div class="d-grid px-4 pt-2 pb-1">
+                        <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-danger w-100">
+                            <small class="align-middle">{% translate 'Log out' %}</small>
+                            <i class="icon-base ri ri-logout-box-r-line ms-2 icon-16px"></i></button>
+                        </form>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                <!--/ User -->
+              </ul>
+            </div>
+          </nav>
+          <!-- / Navbar -->
+          {% endif %}
+
+          <!-- Content wrapper -->
+          <div class="content-wrapper" {% if is_popup %}style="margin-left:0px; padding-top: 20px;"{% endif %}>
+            {% block page_content %}
+              <!-- Content -->
+              <div class="container-fluid flex-grow-1 container-p-y pt-3">
+                <section id="content" class="content">
+                  <div class="border-bottom mb-2 d-flex flex-column flex-md-row">
+                    <div class="me-auto">
+                      <h4 class="fw-bold mb-1">{% block content_title %}{{ title }}{% endblock %}</h4>
+                      {% block breadcrumbs %}{% endblock %}
+                    </div>
+                    {% block page_actions %}{% endblock %}
+                  </div>
+
+                  {% block messages %}
+                    {% for message in messages %}
+                      {% if message.tags == 'success' %}
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                          {{ message|capfirst }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                          </button>
+                        </div>
+                      {% elif message.tags == 'error' %}
+                        <div class="alert alert-danger alert-dismissible" role="alert">
+                          {{ message|capfirst }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                          </button>
+                        </div>
+                      {% elif message.tags == 'warning' %}
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                          {{ message|capfirst }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                          </button>
+                        </div>
+                      {% elif message.tags == 'info' %}
+                        <div class="alert alert-info alert-dismissible" role="alert">
+                          {{ message|capfirst }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                          </button>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% endblock messages %}
+                  <div class="row">
+                    {% block content %} {% endblock %}
+                  </div>
+                </section>
+              </div>
+              <!-- / Content -->
+            {% endblock %}
+
+            {% if not is_popup %}
+            <!-- Footer -->
+            {% include 'admin/footer.html' %}
+            <!-- / Footer -->
+            {% endif %}
+            <div class="content-backdrop fade"></div>
+          </div>
+          <!-- Content wrapper -->
+        </div>
+        <!-- / Layout page -->
+      </div>
+
+      <!-- Overlay -->
+      <div class="layout-overlay layout-menu-toggle"></div>
+
+      <!-- Drag Target Area To SlideIn Menu On Small Screens -->
+      <div class="drag-target"></div>
+    </div>
+    <!-- / Layout wrapper -->
+
+    <!-- Core JS -->
+
+    <!-- build:js assets/vendor/js/theme.js  -->
+
+    <script src="{% static 'materialize_admin/assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/node-waves/node-waves.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/toastr/toastr.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/@algolia/autocomplete-js.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/pickr/pickr.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/hammer/hammer.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/i18n/i18n.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/notyf/notyf.js' %}"></script>
+
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+
+    <!-- Main JS -->
+
+    <script src="{% static 'materialize_admin/assets/js/main.js' %}"></script>
+
+    <!-- Page JS -->
+
+    {% if jazzmin_settings.custom_js %}
+    <script src="{% static jazzmin_settings.custom_js %}"></script>
+    {% endif %}
+
+    {% if jazzmin_settings.show_ui_builder %}
+    <script>
+        window.ui_changes = {{ jazzmin_ui.raw|as_json|safe }};
+    </script>
+    <script src="{% static 'jazzmin/js/ui-builder.js' %}"></script>
+    {% endif %}
+    <script>
+      // badge menu & notifikasi milik backend-pusat; tidak dipakai di proyek ini
+      const URL_BADGE_MENU = "";
+      const URL_NOTIFICATION = "";
+    </script>
+    <script src="{% static 'materialize_admin/js/base-admin.js' %}"></script>
+    {% if site_config.vapidKey %}
+    <audio id="notif-sound" preload="auto">
+      <source src="{% static 'sounds/short-digital-notification-alert.mp3' %}" type="audio/mpeg">
+    </audio>
+    <!-- Load Firebase SDK v10.7.0 -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+    <script>
+      let audioUnlocked = false;
+
+      const audio = document.getElementById("notif-sound");
+
+      /**
+       * 🔑 Unlock audio sekali (browser mengizinkan autoplay setelah interaksi atau notif)
+       */
+      function unlockAudio() {
+        if (!audio || audioUnlocked) return;
+
+        audio.play()
+          .then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioUnlocked = true;
+            console.log("🔊 Audio unlocked");
+          })
+          .catch(() => {});
+      }
+
+      /**
+       * 🔔 Fungsi SATU-SATUNYA untuk play sound (hanya saat notif masuk)
+       */
+      function playNotifSound() {
+        if (!audio) return;
+
+        // Coba unlock dulu jika belum
+        if (!audioUnlocked) {
+          unlockAudio();
+          return;
+        }
+
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+
+
+      // Konfigurasi Firebase Anda
+      const firebaseConfig_ = {
+        apiKey: "{{ site_config.firebase_json.apiKey|default:'' }}",
+        projectId: "{{ site_config.firebase_json.projectId|default:'' }}",
+        messagingSenderId: "{{ site_config.firebase_json.messagingSenderId|default:'' }}",
+        appId: "{{ site_config.firebase_json.appId|default:'' }}"
+      };
+
+      // Inisialisasi Firebase
+      firebase.initializeApp(firebaseConfig_);
+      const messaging = firebase.messaging();
+
+      $(document).ready(function() {
+        // 1. Minta Izin Notifikasi & Ambil Token
+        function getToken() {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then((registration) => {
+              // Gunakan objek registration di dalam getToken
+              messaging.getToken({
+                vapidKey: '{{ site_config.vapidKey|default:"" }}',
+                serviceWorkerRegistration: registration
+              })
+              .then((token) => {
+                // console.log("Token FCM:", token);
+
+                // Kirim token ke server jika diperlukan
+                $.post({
+                  url: '{% url "save_fcm_token" %}',
+                  data: { token: token },
+                  headers: {
+                    'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val()
+                  }
+                })
+                .done(function (response) {
+                  console.log("Token berhasil disimpan ke server");
+                })
+                .fail(function (xhr, status, error) {
+                    console.error("Gagal menyimpan token ke server:", error);
+                });
+              })
+              .catch((err) => { console.error("Gagal ambil token:", err); });
+            });
+          } else {
+            console.log("Service Worker not supported");
+          }
+        }
+
+        // Minta izin notifikasi & unlock audio secara bersamaan
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            // Unlock audio setelah user grant permission
+            unlockAudio();
+            getToken();
+          }
+        });
+
+        // 2. Menangani notifikasi saat Foreground (Web sedang dibuka)
+        // Browser secara default tidak memunculkan banner jika tab aktif,
+        // jadi kita gunakan jQuery untuk menampilkan alert atau UI kustom.
+        messaging.onMessage((payload) => {
+          // 🔊 play sound hanya saat notif masuk
+          playNotifSound();
+
+          // 🔔 toast notification
+          notyf.success(
+            `<b>${payload.notification.title}</b><br> ${payload.notification.body}`
+          );
+
+          initializeAppNotif();
+        });
+      });
+    </script>
+    {% endif %}
+
+    {% block extrajs %}{% endblock %}
+  </body>
+</html>

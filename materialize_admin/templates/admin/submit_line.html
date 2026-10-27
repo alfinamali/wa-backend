@@ -1,0 +1,24 @@
+{% load i18n admin_urls %}
+
+
+{% if show_save %}
+    <button type="submit" class="btn btn-primary btn-sm btn-block" name="_save">{% trans 'Save' %}</button>
+{% endif %}
+{% if show_delete_link and original %}
+    {% url opts|admin_urlname:'delete' original.pk|admin_urlquote as delete_url %}
+    <a href="{% add_preserved_filters delete_url %}" class="btn btn-danger btn-sm btn-block">{% trans "Delete" %}</a>
+{% endif %}
+{% if show_save_as_new %}
+    <button type="submit" class="btn btn-info btn-sm btn-block" name="_saveasnew">{% trans 'Save as new' %}</button>
+{% endif %}
+{% if show_save_and_add_another %}
+    <button type="submit" class="btn btn-success btn-sm btn-block" name="_addanother">{% trans 'Save and add another' %}</button>
+{% endif %}
+{% if show_save_and_continue %}
+    <button type="submit" class="btn btn-warning btn-sm btn-block" name="_continue">
+        {% if can_change %}{% trans 'Save and continue editing' %}{% else %}{% trans 'Save and view' %}{% endif %}
+    </button>
+{% endif %}
+{% if show_close %}
+    <a href="{% url opts|admin_urlname:'changelist' %}" class="btn btn-secondary btn-sm btn-block">{% trans 'Close' %}</a>
+{% endif %}

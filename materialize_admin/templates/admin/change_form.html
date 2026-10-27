@@ -1,0 +1,364 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify jazzmin %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/spinkit/spinkit.css' %}" />
+  <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/flatpickr/flatpickr.css' %}" />
+  {% comment %} <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}" /> {% endcomment %}
+  <style>
+    .table thead tr th {
+      padding-block: 0.5rem;
+    }
+
+    ul.errorlist {
+      font-size: 12px;
+      padding-top: 10px;
+      padding-left: 1.5rem;
+      color: red;
+    }
+
+    form .aligned .datetime {
+      float: left;
+      margin-left: 0;
+      padding-left: 0;
+      display: flex;
+      align-items: center !important;
+      font-size: 12px;
+    }
+
+    form .aligned .datetime input{
+      margin-left: 10px;
+      margin-right: 10px;
+      min-width: 200px;
+    }
+
+    .datetime br{
+      display: none;
+    }
+
+    .datetime .datetimeshortcuts{
+      padding-right: 10px;
+    }
+
+    .empty-form {
+      display: none;
+    }
+
+    .related-widget-wrapper {
+      display: flex;
+      align-items: center;
+      float:unset;
+    }
+
+    .related-widget-wrapper-link img {
+      width: 20px;
+      margin: 0 3px 0 3px;
+    }
+
+    a.related-widget-wrapper-link[aria-disabled="true"] {
+      opacity: 0.3;
+    }
+
+    @media (min-width: 992px) {
+      .sticky-desktop {
+        position: sticky;
+        top: 70px;
+        z-index: 8;
+        .window-scrolled & {
+          @include border-top-radius(0);
+        }
+        .layout-navbar-fixed & {
+          inset-block-start: calc($navbar-height - .4375rem);
+        }
+        .layout-menu-fixed .layout-horizontal & {
+          inset-block-start: calc($navbar-height * 2 - .25rem);
+        }
+        .layout-menu-fixed.layout-navbar-fixed .layout-horizontal & {
+          inset-block-start: $navbar-height;
+        }
+      }
+    }
+
+    .django-ckeditor-widget{
+      display: block !important;
+    }
+
+    .selector-chooseall, .selector-clearall {
+      background: #3c553b;
+      color: white;
+      border: 1px solid;
+      border-radius: 5px;
+    }
+
+    .selector ul.selector-chooser {
+      width: 21px;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+
+    .selector .selector-filter {
+      background: #3c553b;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+
+    .related-widget-wrapper {
+      display: flex;
+    }
+
+    .related-widget-wrapper-link {
+      padding: 2px;
+    }
+
+    .selector-add, .selector-remove {
+      opacity: 1;
+      border: 0;
+      width: 15px;
+    }
+    .selector-add[disabled], .selector-remove[disabled] {
+      opacity: 0.3;
+    }
+
+    .selector .help-tooltip {
+      background: url(/static/admin/img/icon-unknown.svg) 0 0 no-repeat;
+      background-color: white;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .selector-available-title, .selector-chosen-title {
+      background-color: #f7f7f9;
+    }
+
+    .BoundField #id_password {
+      border: 0px;
+      padding: 0px;
+    }
+
+    .BoundField > .form-check {
+      padding: 0;
+    }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+  {{ media }}
+  <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/select2/select2.css' %}">
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% if not is_popup %}
+  {% block breadcrumbs %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-custom-icon">
+      <li class="breadcrumb-item">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        <i class="breadcrumb-icon icon-base ri ri-arrow-right-s-line icon-22px align-middle"></i>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+        <i class="breadcrumb-icon icon-base ri ri-arrow-right-s-line icon-22px align-middle"></i>
+      </li>
+      <li class="breadcrumb-item">
+        {% if has_view_permission %}
+          <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        {% else %}
+          {{ opts.verbose_name_plural|capfirst }}
+        {% endif %}
+        <i class="breadcrumb-icon icon-base ri ri-arrow-right-s-line icon-22px align-middle"></i>
+      </li>
+      <li class="breadcrumb-item active">
+        {% if add %}
+          {% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}
+        {% else %}
+          {{ original|truncatewords:"18" }}
+        {% endif %}
+      </li>
+    </ol>
+  </nav>
+  {% endblock %}
+{% endif %}
+
+{% block content_title %}{{ opts.verbose_name_plural|capfirst }}{% endblock %}
+
+{% block content %}
+  <div id="content-main" class="col-12">
+    <div class="card card-body p-3 mb-3">
+      <blockquote class="mb-0">
+        {% blocktrans %}Inputan dengan label yang memakai huruf <strong>tebal</strong> wajib diisi.
+        {% endblocktrans %}<br>
+        Tekan tanda <img width="10" height="10" src="{% static 'admin/img/icon-addlink.svg' %}"
+          alt="Tambah"> untuk menambahkan item lainnya yang tidak tersedia dalam list pilihan.<br>
+        Tekan tanda <img width="10" height="10" src="{% static 'admin/img/icon-changelink.svg' %}"
+          alt="Ubah"> untuk mengubah item dalam list pilihan.
+      </blockquote>
+    </div>
+
+    <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>
+      {% csrf_token %}
+      {% block form_top %}{% endblock %}
+
+      {% if errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          {% if errors|length == 1 %}
+            {% trans "Please correct the error below." %}
+          {% else %}
+            {% trans "Please correct the errors below." %}
+          {% endif %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+          </button>
+        </div>
+        {% for error in adminform.form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {{ error|capfirst }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="row">
+        {% if is_popup %}
+          <input type="hidden" name="{{ is_popup_var }}" value="1">
+        {% endif %}
+        {% if to_field %}
+          <input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">
+        {% endif %}
+
+        {% block field_sets %}
+          <div class="col-12 col-md-12">
+            <div class="card card-action">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-action-title m-0 me-2">Form {{ title }}</h5>
+                <div class="card-action-element">
+                  <ul class="list-inline mb-0">
+                    <li class="list-inline-item">
+                      <a href="javascript:void(0);" class="card-collapsible">
+                        <i class="icon-base ri ri-arrow-up-s-line icon-sm"></i>
+                      </a>
+                    </li>
+                    <li class="list-inline-item">
+                      <a href="javascript:void(0);" class="card-expand">
+                        <i class="icon-base ri ri-fullscreen-fill icon-sm"></i>
+                      </a>
+                    </li>
+                    <li class="list-inline-item">
+                      <a href="javascript:void(0);" class="dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="icon-base ri ri-more-2-line icon-sm"></i>
+                      </a>
+                      <ul class="dropdown-menu">
+                        {% if change %}
+                          {% if not is_popup %}
+                            {% block object_tools_items %}
+                              {% change_form_object_tools %}
+                            {% endblock %}
+                          {% endif %}
+                        {% endif %}
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="collapse show">
+                <div class="card-body">
+                  {% for fieldset in adminform %}
+                  {% include "admin/includes/fieldset.html" %}
+                  {% endfor %}
+
+                  {% block inline_field_sets %}
+                    {% for inline_admin_formset in inline_admin_formsets %}
+                      {% include inline_admin_formset.opts.template %}
+                    {% endfor %}
+                  {% endblock %}
+                </div>
+              </div>
+              <div class="card-footer">
+                {% block submit_buttons_bottom %}
+                  {% submit_row %}
+                  {% block object_tools %}{% endblock %}
+                {% endblock %}
+              </div>
+            </div>
+          </div>
+        {% endblock %}
+
+        {% block after_field_sets %}{% endblock %}
+        {% block after_related_objects %}{% endblock %}
+
+        {% block admin_change_form_document_ready %}
+          <script type="text/javascript" id="django-admin-form-add-constants" src="{% static 'admin/js/change_form.js' %}" {% if adminform and add %}data-model-name="{{ opts.model_name }}"{% endif %}></script>
+        {% endblock %}
+
+        {% prepopulated_fields_js %}
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extrajs %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'materialize_admin/assets/vendor/libs/select2/select2.js' %}"></script>
+  <script type="text/javascript" src="{% static 'jazzmin/js/change_form.js' %}"></script>
+  {% if jazzmin_settings.related_modal_active %}
+    <script type="text/javascript" src="{% static 'jazzmin/plugins/bootstrap-show-modal/bootstrap-show-modal.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jazzmin/js/related-modal.js' %}"></script>
+  {% endif %}
+  <script src="{% static 'materialize_admin/assets/vendor/libs/moment/moment.js' %}"></script>
+  <script src="{% static 'materialize_admin/assets/vendor/libs/flatpickr/flatpickr.js' %}"></script>
+  <script src="{% static 'materialize_admin/assets/vendor/libs/block-ui/block-ui.js' %}"></script>
+  <script src="{% static 'materialize_admin/assets/js/cards-actions.js' %}"></script>
+  <script>
+    $(function(){
+      const flatpickrDate = $('.flatpickr-input[size=10]');
+      const inputFieldDate = $('.flatpickr-input-date');
+      const flatpickrTime = $('.flatpickr-input[size=8]');
+      if (flatpickrDate) {
+        flatpickrDate.flatpickr({
+          monthSelectorType: 'static',
+          dateFormat: 'd-m-Y'
+        });
+      }
+
+      if (inputFieldDate) {
+        inputFieldDate.flatpickr({
+          monthSelectorType: 'static',
+          dateFormat: 'd-m-Y'
+        });
+      }
+
+      if (flatpickrTime) {
+        flatpickrTime.flatpickr({
+          enableTime: true,
+          dateFormat: 'H:i:S',
+          noCalendar: true
+        });
+      }
+    });
+
+    document.addEventListener("click", function (e) {
+      const toggle = e.target.closest(".toggle-password");
+      if (!toggle) return;
+
+      const input = toggle.closest(".input-group").querySelector("input");
+      const icon = toggle.querySelector("i");
+
+      if (input.type === "password") {
+          input.type = "text";
+          icon.classList.replace("ri-eye-off-line", "ri-eye-line");
+      } else {
+          input.type = "password";
+          icon.classList.replace("ri-eye-line", "ri-eye-off-line");
+      }
+    });
+  </script>
+{% endblock %}

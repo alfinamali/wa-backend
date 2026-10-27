@@ -522,3 +522,97 @@ class SyncBlockedTests(TestCase):
         self.api.post(f"/api/outlets/{self.o.id}/sync/")
         self.o.refresh_from_db()
         self.assertEqual(self.o.sync_blocked, "")
+
+
+class PhoneNormalizeTests(TestCase):
+    def test_normalize(self):
+        from .serializers import normalize_wa
+        for raw, want in [("081228327935", "6281228327935"), ("+62 812-2832-7935", "6281228327935"),
+                          ("81228327935", "6281228327935"), ("006281228327935", "6281228327935"), ("6591234567", "6591234567")]:
+            self.assertEqual(normalize_wa(raw), want, raw)
+
+    def test_start_conversation_with_local_number(self):
+        U = get_user_model()
+        api = APIClient(); api.force_authenticate(U.objects.create_user("a", password="x", is_staff=True))
+        o = Outlet.objects.create(name="SAM", phone_number_id="PN1", display_number="1")
+        r = api.post("/api/conversations/", {"outlet": o.id, "wa_id": "081228327935", "name": "ridlo"}, format="json")
+        self.assertEqual(r.data["wa_id"], "6281228327935")
+
+    def test_migration_merges_local_duplicate(self):
+        import importlib
+        from django.apps import apps as global_apps
+        mig = importlib.import_module("inbox.migrations.0006_fix_local_phone_numbers")
+        o = Outlet.objects.create(name="SAM", phone_number_id="PN1", display_number="1")
+        local = Contact.objects.create(wa_id="081228327935", name="ridlo")
+        real = Contact.objects.create(wa_id="6281228327935", name="")
+        c1 = Conversation.objects.create(outlet=o, contact=local)
+        c2 = Conversation.objects.create(outlet=o, contact=real)
+        Message.objects.create(conversation=c1, direction="out", body="halo")
+        Message.objects.create(conversation=c2, direction="in", body="iya")
+        solo = Contact.objects.create(wa_id="085700001111", name="solo")
+        mig.forwards(global_apps, None)
+        self.assertFalse(Contact.objects.filter(wa_id="081228327935").exists())
+        real.refresh_from_db()
+        self.assertEqual(real.name, "ridlo")
+        self.assertEqual(Conversation.objects.get(contact=real).messages.count(), 2)
+        solo.refresh_from_db()
+        self.assertEqual(solo.wa_id, "6285700001111")
+
+
+class AdminThemeSmokeTests(TestCase):
+    """Halaman /admin/ (tema materialize_admin + jazzmin) harus tampil tanpa error template."""
+
+    def setUp(self):
+        U = get_user_model()
+        self.admin = U.objects.create_superuser("root", "root@x.id", "Rahasia#2026")
+        acc = WhatsAppAccount.objects.create(waba_id="111", name="Toko A", access_token="t")
+        self.o = Outlet.objects.create(name="SAM", city="Surabaya", phone_number_id="PN1", display_number="+62 1",
+                                       account=acc, mode="coexist")
+        self.o.members.add(self.admin)
+        c = Conversation.objects.create(outlet=self.o, contact=Contact.objects.create(wa_id="6281", name="Budi"))
+        self.msg = Message.objects.create(conversation=c, direction="in", body="Halo")
+        MessageTemplate.objects.create(waba_id="111", name="halo", body="Halo", status="approved")
+
+    def test_login_page(self):
+        r = self.client.get("/admin/login/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "materialize_admin/assets")
+
+    def test_pages_render(self):
+        self.client.force_login(self.admin)
+        u = self.admin.pk
+        for url in ["/admin/", "/admin/inbox/outlet/", f"/admin/inbox/outlet/{self.o.pk}/change/", "/admin/inbox/outlet/add/",
+                    "/admin/inbox/conversation/", "/admin/inbox/message/", f"/admin/inbox/message/{self.msg.pk}/change/",
+                    "/admin/inbox/contact/", "/admin/inbox/messagetemplate/", "/admin/inbox/whatsappaccount/",
+                    "/admin/auth/user/", f"/admin/auth/user/{u}/change/", "/admin/auth/user/add/",
+                    f"/admin/auth/user/{u}/password/", "/admin/password_change/", "/admin/inbox/outlet/?q=SAM",
+                    f"/admin/inbox/outlet/{self.o.pk}/delete/", f"/admin/inbox/outlet/{self.o.pk}/history/"]:
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, url)
+        r = self.client.get("/admin/")
+        for label in ["Outlet", "Akun WhatsApp", "Percakapan", "Template pesan", "Multi Outlet"]:
+            self.assertContains(r, label)
+
+    def test_sidebar_hides_models_without_permission(self):
+        staff = get_user_model().objects.create_user("staf", password="x", is_staff=True)
+        from django.contrib.auth.models import Permission
+        staff.user_permissions.add(Permission.objects.get(codename="view_outlet"))
+        self.client.force_login(staff)
+        r = self.client.get("/admin/inbox/outlet/")
+        self.assertEqual(r.status_code, 200)
+        self.assertNotContains(r, "/admin/auth/user/")
+
+
+class AdminLoginFlowTests(TestCase):
+    def test_login_redirects_to_admin_index(self):
+        get_user_model().objects.create_superuser("admin", "a@x.id", "Rahasia#2026")
+        r = self.client.get("/admin/login/?next=/admin/")
+        self.assertContains(r, 'name="next" value="/admin/"')
+        r = self.client.post("/admin/login/?next=/admin/", {"username": "admin", "password": "Rahasia#2026", "next": "/admin/"})
+        self.assertRedirects(r, "/admin/", fetch_redirect_response=False)
+
+    def test_static_tags_have_no_encoded_query(self):
+        u = get_user_model().objects.create_superuser("admin", "a@x.id", "Rahasia#2026")
+        self.client.force_login(u)
+        html = self.client.get("/admin/").content.decode()
+        self.assertNotIn("%3Fv%3D", html)  # {% static 'x.js?v=1' %} meng-encode tanda tanya -> 404

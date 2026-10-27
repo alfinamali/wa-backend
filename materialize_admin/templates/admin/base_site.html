@@ -1,0 +1,54 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block extrajs %}
+{{ block.super }}
+<script src="{% static 'materialize_admin/assets/vendor/libs/block-ui/block-ui.js' %}"></script>
+<script>
+function blockUI(selector, message = '') {
+  $(selector).block({
+    message: `<div class="spinner-border text-primary"></div> ${message}`,
+    css: { border: '0', backgroundColor: 'transparent' },
+    overlayCSS: { backgroundColor: '#000', opacity: 0.3 }
+  });
+}
+
+function unblockUI(selector) {
+  $(selector).unblock();
+}
+
+function setButtonLoading(btn, isLoading, options = {}) {
+  const defaultOptions = {
+    loadingText: "Loading...",
+    loadingIcon: "mdi mdi-loading mdi-spin",
+  };
+
+  const config = { ...defaultOptions, ...options };
+
+  // simpan original state sekali saja
+  if (!btn.data("original")) {
+    btn.data("original", {
+      html: btn.html(),
+    });
+  }
+
+  if (isLoading) {
+    btn.prop("disabled", true);
+
+    const iconHtml = `<i class="${config.loadingIcon} me-1"></i>`;
+    btn.html(iconHtml + config.loadingText);
+  } else {
+    btn.prop("disabled", false);
+
+    // restore original
+    btn.html(btn.data("original").html);
+  }
+}
+
+$.fn.btnLoading = function (state, options) {
+  return this.each(function () {
+    setButtonLoading($(this), state, options);
+  });
+};
+</script>
+{% endblock %}

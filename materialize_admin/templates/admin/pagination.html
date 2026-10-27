@@ -1,0 +1,52 @@
+{% load admin_list i18n %}
+
+{% if cl.result_count > 0 and cl.paginator.num_pages > 1 %}
+<div class="pagination-container mt-4">
+  <nav aria-label="{% trans 'Pagination' %}">
+    <ul class="pagination pagination-round pagination-primary justify-content-center justify-content-md-end mb-0">
+      <!-- Previous Page Button -->
+      {% if cl.page_num > 1 %}
+        <li class="page-item">
+          <a class="page-link" href="?p={{ cl.page_num|add:"-1" }}{% if cl.is_popup %}&amp;_popup=1{% endif %}{% if cl.query %}&amp;q={{ cl.query }}{% endif %}{% for k, v in cl.params.items %}{% if k != 'p' and k != 'q' %}&amp;{{ k }}={{ v }}{% endif %}{% endfor %}" aria-label="{% trans 'Previous' %}">
+            <i class="ri ri-arrow-left-s-line"></i>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">
+            <i class="ri ri-arrow-left-s-line"></i>
+          </span>
+        </li>
+      {% endif %}
+      
+      <!-- Page Numbers -->
+      {% for i in cl.paginator.page_range %}
+        {% if cl.page_num == i %}
+          <li class="page-item active">
+            <span class="page-link">{{ i }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?p={{ i }}{% if cl.is_popup %}&amp;_popup=1{% endif %}{% if cl.query %}&amp;q={{ cl.query }}{% endif %}{% for k, v in cl.params.items %}{% if k != 'p' and k != 'q' %}&amp;{{ k }}={{ v }}{% endif %}{% endfor %}">{{ i }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+      
+      <!-- Next Page Button -->
+      {% if cl.page_num < cl.paginator.num_pages %}
+        <li class="page-item">
+          <a class="page-link" href="?p={{ cl.page_num|add:"1" }}{% if cl.is_popup %}&amp;_popup=1{% endif %}{% if cl.query %}&amp;q={{ cl.query }}{% endif %}{% for k, v in cl.params.items %}{% if k != 'p' and k != 'q' %}&amp;{{ k }}={{ v }}{% endif %}{% endfor %}" aria-label="{% trans 'Next' %}">
+            <i class="ri ri-arrow-right-s-line"></i>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">
+            <i class="ri ri-arrow-right-s-line"></i>
+          </span>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endif %}

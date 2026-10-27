@@ -1,0 +1,68 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html
+  lang="id"
+  class="layout-wide customizer-hide"
+  dir="ltr"
+  data-skin="default"
+  data-bs-theme="light"
+  data-assets-path="{% static 'materialize_admin/assets/' %}"
+  data-template="vertical-menu-template">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{% block title %}Error{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'materialize_admin/assets/img/favicon/favicon.ico' %}" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&ampdisplay=swap"
+      rel="stylesheet" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/fonts/iconify-icons.css' %}" />
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/libs/node-waves/node-waves.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/css/demo.css' %}" />
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="{% static 'materialize_admin/assets/vendor/css/pages/page-misc.css' %}" />
+
+    <!-- Helpers -->
+    <script src="{% static 'materialize_admin/assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/js/config.js' %}"></script>
+
+    {% block extrastyle %}{% endblock %}
+  </head>
+
+  <body>
+    <div class="misc-wrapper">
+      {% block error_content %}{% endblock %}
+
+      <!--<img
+        src="{% static 'materialize_admin/assets/img/illustrations/misc-bg-light.png' %}"
+        alt="background"
+        class="misc-bg d-none d-lg-block"
+        data-app-light-img="illustrations/misc-bg-light.png"
+        data-app-dark-img="illustrations/misc-bg-dark.png" />-->
+    </div>
+
+    <!-- Core JS -->
+    <script src="{% static 'materialize_admin/assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/vendor/libs/node-waves/node-waves.js' %}"></script>
+    <script src="{% static 'materialize_admin/assets/js/main.js' %}"></script>
+
+    {% block extrajs %}{% endblock %}
+  </body>
+</html>

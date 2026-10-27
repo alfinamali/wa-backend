@@ -1,0 +1,11 @@
+<div class="d-flex">
+  <div class="d-flex align-items-center mr-3">
+    <label class="mr-2">{{ date_label }}</label>&nbsp;
+    {% with widget=widget.subwidgets.0 %}{% include widget.template_name %}{% endwith %}
+  </div>
+  &nbsp;
+  <div class="d-flex align-items-center">
+    <label class="mr-2">{{ time_label }}</label>&nbsp;
+    {% with widget=widget.subwidgets.1 %}{% include widget.template_name %}{% endwith %}
+  </div>
+</div>

@@ -1,0 +1,25 @@
+{% load i18n parameters widgets %}
+
+<select 
+	id='{{filter_spec.parameter_name}}_select_id' 
+	name="{{filter_spec.parameter_name}}" 
+	class="form-control select2"
+	{% if filter_spec.parameter_name is None %}
+		data-placeholder="............"
+	{% else %}
+		data-placeholder="{% trans 'Pilih' %} {{ filter_spec.title }}"
+	{% endif %}>
+	{% for c in filter_spec|get_filter_choices:cl %}
+	{% with c.query_string|slice:"1:"|parseqs:filter_spec.parameter_name as id %}
+	{% with filter_spec.parameter_name|add:':'|add:id as param_id %}
+	{% if c.display == 'Semua' %}
+	<option {% if c.selected %}selected=selected{% endif %} value="{{id}}"
+		url-param="?{{ request.GET|parameter_set:param_id }}">{{ c.display }} {{filter_spec.title}}</option>
+	{% else %}
+	<option {% if c.selected %}selected=selected{% endif %} value="{{id}}"
+		url-param="?{{ request.GET|parameter_set:param_id }}">{{ c.display }}</option>
+	{% endif %}
+	{% endwith %}
+	{% endwith %}
+	{% endfor %}
+</select>

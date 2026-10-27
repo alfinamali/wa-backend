@@ -1,0 +1,308 @@
+{% load admin_list %}
+{% load static %}
+{% load widgets %}
+
+<fieldset class="module aligned {{ fieldset.classes }} card card-action shadow-none mb-3" style="margin-left: -18px;margin-right: -18px;">
+  {% if fieldset.name %}
+  <div class="card-header d-flex align-items-center justify-content-between bg-primary">
+    <div>
+      {% if fieldset.name %}
+      <h5 class="card-action-title m-0 me-2 text-bg-primary">{{ fieldset.name|capfirst }}</h5>
+      {% endif %}
+
+      {% if fieldset.description %}
+      <small class="card-subtitle mb-2 text-bg-primary">{{ fieldset.description }}</small>
+      {% endif %}
+    </div>
+    <div class="card-action-element">
+      <ul class="list-inline mb-0">
+        <li class="list-inline-item">
+          <a href="javascript:void(0);" class="card-collapsible">
+            <i class="icon-base ri ri-arrow-up-s-line icon-sm text-white"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="collapse show">
+    <div class="card-body pt-5">
+      {% for line in fieldset %}
+        <div class="row mb-3
+          {% if line.fields|length == 1 and line.errors %} errors{% endif %}
+          {% if not line.has_visible_field %} d-none{% endif %}
+          {% for field in line %}
+            {% if field.field.name %} field-{{ field.field.name }}{% endif %}
+          {% endfor %}">
+          {% for field in line %}
+            <div class="{% if not line.fields|length == 1 %}col-md-6{% else %}col-12{% endif %}">
+              {% if field.is_readonly %}
+                <label class="form-check-label" for="{{ field.field.id_for_label }}">
+                  {{ field.field.label }}
+                  {% if field.field.field.required %}<span class="text-danger">* </span>{% endif %}
+                </label>
+                <div class="readonly">{{ field.contents }}</div>
+              {% else %}
+                <div class="form-group {{ field.field|classname }}">
+                  {% if field.field|is_bool %}
+                    <div class="form-check mb-2">
+                      {{ field.field }}
+                      <label class="form-check-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                        <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                        {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% if field.field.help_text %}
+                        <br>
+                        <small class="form-text text-muted">{{ field.field.help_text|safe }}</small>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_radio %}
+                    <div class="form-check mb-4 p-0">
+                      <label class="form-check-label" for="{{ field.field.id_for_label }}">
+                        {{ field.field.label }}
+                      </label>
+                      {{ field.field }}
+                      {% if field.field.help_text %}
+                        <br>
+                        <small class="form-text text-muted">{{ field.field.help_text|safe }}</small>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_date %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                      <label class="form-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                        <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                        {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        {{ field.field|addcls:"form-control flatpickr-input-date is-invalid" }}
+                      {% else %}
+                        {{ field.field|addcls:"form-control flatpickr-input-date" }}
+                      {% endif %}
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_datetime %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                      <label class="form-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                        <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                        {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% endif %}
+
+                      <div>
+                        {% if field.errors %}
+                          {{ field.field|addcls:"form-control flatpickr-input is-invalid" }}
+                        {% else %}
+                          {{ field.field|addcls:"form-control flatpickr-input" }}
+                        {% endif %}
+                      </div>
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_time %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                      <label class="form-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                        <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                        {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% endif %}
+
+                      <div>
+                        {% if field.errors %}
+                          {{ field.field|addcls:"form-control flatpickr-input is-invalid" }}
+                        {% else %}
+                          {{ field.field|addcls:"form-control flatpickr-input" }}
+                        {% endif %}
+                      </div>
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_select %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                        <label class="form-label" for="{{ field.field.id_for_label }}">
+                          {% if field.field.field.required %}
+                          <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                          {% else %}
+                          {{ field.field.label }}
+                          {% endif %}
+                        </label>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        {{ field.field|addcls:"form-control select2 is-invalid" }}
+                      {% else %}
+                        {{ field.field|addcls:"form-control select2" }}
+                      {% endif %}
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_multiselect %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                        <label class="form-label mb-2">
+                          {% if field.field.field.required %}
+                          <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                          {% else %}
+                          {{ field.field.label }}
+                          {% endif %}
+                        </label>
+                      {% endif %}
+
+                      {% with selected_values=field.field.value|split:"," %}
+                      <div class="d-flex flex-wrap gap-3">
+                        {% for value, text in field.field.field.choices %}
+                          <div class="form-check form-check-inline">
+                            <input type="checkbox"
+                                    id="id_{{ field.field.name }}_{{ forloop.counter0 }}"
+                                    name="{{ field.field.name }}"
+                                    value="{{ value }}"
+                                    class="form-check-input{% if field.errors %} is-invalid{% endif %}"
+                                    {% if text in selected_values %}checked="checked"{% endif %}>
+                            <label class="form-check-label" for="id_{{ field.field.name }}_{{ forloop.counter0 }}">
+                              {{ text }}
+                            </label>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      {% endwith %}
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text mt-1">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% elif field.field|is_rupiah_field %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                      <label class="form-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                          <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                          {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% endif %}
+                      <div class="input-group {{ field.field.widget|classname }}">
+                        <span class="input-group-text">Rp</span>
+                        {% if field.errors %}
+                          {{ field.field|addcls:"form-control is-invalid" }}
+                        {% else %}
+                          {{ field.field|addcls:"form-control" }}
+                        {% endif %}
+
+                        {% if field.field|has_widget_class:"action-button-input" %}
+                            <button
+                                class="btn btn-outline-primary waves-effect"
+                                type="button"
+                                data-button-action="{{ field.field|widget_attr:'data-button-action' }}"
+                                data-button-target="{{ field.field|widget_attr:'data-button-target' }}"
+                            >
+                              {{ field.field|widget_attr:'data-button-text' }}
+                            </button>
+                        {% endif %}
+                      </div>
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <div class="mb-3">
+                      {% if field.field.label %}
+                      <label class="form-label" for="{{ field.field.id_for_label }}">
+                        {% if field.field.field.required %}
+                        <b>{{ field.field.label }}</b><span class="text-danger">* </span>
+                        {% else %}
+                        {{ field.field.label }}
+                        {% endif %}
+                      </label>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        {{ field.field|addcls:"form-control is-invalid" }}
+                      {% else %}
+                        {{ field.field|addcls:"form-control" }}
+                      {% endif %}
+
+                      {% if field.field.help_text %}
+                        <div id="{{ field.field.id_for_label }}Help" class="form-text">{{ field.field.help_text|safe }}</div>
+                      {% endif %}
+
+                      {% if field.errors %}
+                        <div class="text-help form-text">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</fieldset>

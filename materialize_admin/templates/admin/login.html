@@ -1,0 +1,126 @@
+{% extends "registration/base.html" %}
+
+{% load i18n jazzmin %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block content %}
+<div
+  class="d-flex col-12 col-lg-5 col-xl-4 align-items-center authentication-bg position-relative py-sm-12 px-12 py-6">
+  <div class="w-px-400 mx-auto pt-12 pt-lg-0">
+    <h4 class="mb-1">{{ jazzmin_settings.welcome_sign }}</h4>
+    <p class="mb-5">Masuk dengan akun staf untuk mengelola outlet dan pengguna.</p>
+
+    <form id="formAuthentication" class="mb-5" action="{{ app_path }}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      {% if user.is_authenticated %}
+        <p class="errornote">
+          <div class="callout callout-danger">
+            <p>
+              {% blocktrans trimmed %}
+                You are authenticated as {{ username }}, but are not authorized to
+                access this page. Would you like to login to a different account?
+              {% endblocktrans %}
+            </p>
+          </div>
+        </p>
+      {% endif %}
+
+      {% if form.errors %}
+        {% if form.username.errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {{ form.username.label }}: {{ form.username.errors|join:', ' }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
+          </div>
+        {% endif %}
+        {% if form.password.errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {{ form.password.label }}: {{ form.password.errors|join:', ' }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
+          </div>
+        {% endif %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="form-floating form-floating-outline mb-5 form-control-validation">
+        <input
+          type="text"
+          class="form-control"
+          id="email"
+          name="username"
+          placeholder="{{ form.username.label }}"
+          required
+          autofocus />
+        <label for="email">{{ form.username.label }}</label>
+      </div>
+      <div class="mb-5">
+        <div class="form-password-toggle form-control-validation">
+          <div class="input-group input-group-merge">
+            <div class="form-floating form-floating-outline">
+              <input
+                type="password"
+                id="password"
+                class="form-control"
+                name="password"
+                placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                aria-describedby="password" />
+              <label for="password">{{ form.password.label }}</label>
+            </div>
+            <span class="input-group-text cursor-pointer"
+              ><i class="icon-base ri ri-eye-off-line icon-20px"></i
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div class="mb-5 d-flex justify-content-between mt-5">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="remember-me" />
+          <label class="form-check-label" for="remember-me"> Remember Me </label>
+        </div>
+        {% url 'admin_password_reset' as password_reset_url %}
+        {% if password_reset_url %}
+          <a href="{{ password_reset_url }}" class="float-end mb-1 mt-2">
+            {% trans 'Forgotten your password or username?' %}
+          </a>
+        {% endif %}
+      </div>
+      <button class="btn btn-primary d-grid w-100" type="submit">{% trans "Log in" %}</button>
+    </form>
+
+    {% comment %} <div class="divider my-5">
+      <div class="divider-text">or</div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-2">
+      <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-facebook">
+        <i class="icon-base ri ri-facebook-fill icon-18px"></i>
+      </a>
+
+      <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-twitter">
+        <i class="icon-base ri ri-twitter-fill icon-18px"></i>
+      </a>
+
+      <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-github">
+        <i class="icon-base ri ri-github-fill icon-18px"></i>
+      </a>
+
+      <a href="javascript:;" class="btn btn-icon rounded-circle btn-text-google-plus">
+        <i class="icon-base ri ri-google-fill icon-18px"></i>
+      </a>
+    </div> {% endcomment %}
+  </div>
+</div>
+
+{% endblock %}

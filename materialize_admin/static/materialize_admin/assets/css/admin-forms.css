@@ -1,0 +1,283 @@
+/* Materialize-styled form fields for Django admin */
+
+/* Inline formsets styling */
+.inline-group {
+    margin-bottom: 1.5rem;
+}
+
+.inline-related {
+    margin-bottom: 1.5rem;
+}
+
+.inline-related h6 {
+    color: #566a7f;
+    font-weight: 500;
+}
+
+.inline-related .delete {
+    padding-left: 10px;
+    display: inline-block;
+}
+
+.inline-related .delete label {
+    margin-bottom: 0;
+    display: inline;
+}
+
+.empty-form {
+    display: none;
+}
+
+/* Tabular inline specific */
+.inline-group table {
+    margin-bottom: 0;
+}
+
+.inline-group table th {
+    background-color: #f5f5f9;
+    font-weight: 500;
+    color: #566a7f;
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.inline-group table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.inline-group table td.original p {
+    margin: 0;
+}
+
+.inline-group table .form-row td:last-child {
+    text-align: center;
+}
+
+/* Add button styling */
+.add-row {
+    transition: all 0.2s ease-in-out;
+}
+
+.add-row:hover {
+    transform: translateY(-2px);
+}
+
+/* Floating label styles */
+.form-floating {
+    position: relative;
+}
+
+.form-floating > .form-control,
+.form-floating > .form-control-plaintext {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1rem 0.75rem;
+    overflow: hidden;
+    text-align: start;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    border: 1px solid transparent;
+    transform-origin: 0 0;
+    transition: opacity .1s ease-in-out, transform .1s ease-in-out;
+    color: #697a8d;
+    z-index: 2;
+}
+
+.form-floating > .form-control {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    background-color: white;
+    height: auto;
+    padding: 0 5px;
+    margin-left: 10px;
+}
+
+.form-floating-outline {
+    border-radius: 0.375rem;
+}
+
+.form-floating-outline > .form-control {
+    background-color: transparent;
+    border: 1px solid #d9dee3;
+    border-radius: 0.375rem;
+}
+
+.form-floating-outline > .form-control:focus {
+    border-color: #696cff;
+    box-shadow: 0 0 0.25rem 0.05rem rgba(105, 108, 255, 0.1);
+}
+
+/* Fix for Materialize submit button styling */
+.submit-row input[type="submit"],
+.submit-row button[type="submit"] {
+    background-color: inherit !important;
+    color: white !important;
+    border: none !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+    height: auto !important;
+    line-height: normal !important;
+    padding: 0.5rem 1rem !important;
+    width: 100% !important;
+}
+
+.waves-input-wrapper {
+    display: block !important;
+    width: 100% !important;
+}
+
+.btn.btn-primary {
+    background-color: #696cff !important;
+}
+
+.btn.btn-secondary {
+    background-color: #8592a3 !important;
+}
+
+.btn.btn-danger {
+    background-color: #ff3e1d !important;
+}
+
+/* Text inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select {
+    display: block;
+    width: 100%;
+    padding: 0.4375rem 0.875rem;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.53;
+    color: #697a8d;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #d9dee3;
+    appearance: none;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Focus state */
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+    color: #697a8d;
+    background-color: #fff;
+    border-color: rgba(105, 108, 255, 0.5);
+    outline: 0;
+    box-shadow: 0 0 0.25rem 0.05rem rgba(105, 108, 255, 0.3);
+}
+
+/* Form group styling */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+/* Form label styling */
+.form-label {
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #566a7f;
+}
+
+/* Help text styling */
+.form-text {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: #a1acb8;
+}
+
+/* Error styling */
+.errorlist {
+    list-style: none;
+    padding-left: 0;
+    color: #ff3e1d;
+    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Checkbox styling */
+.form-check {
+    display: block;
+    min-height: 1.434375rem;
+    padding-left: 1.7em;
+    margin-bottom: 0.125rem;
+}
+
+.form-check input[type="checkbox"] {
+    float: left;
+    margin-left: -1.7em;
+    width: 1.15em;
+    height: 1.15em;
+    margin-top: 0.175em;
+    vertical-align: top;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid #d9dee3;
+    appearance: none;
+    border-radius: 0.25em;
+}
+
+.form-check input[type="checkbox"]:checked {
+    background-color: #696cff;
+    border-color: #696cff;
+}
+
+/* Select styling */
+select {
+    display: block;
+    width: 100%;
+    padding: 0.4375rem 2.25rem 0.4375rem 0.875rem;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.53;
+    color: #697a8d;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23697a8d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    background-size: 16px 12px;
+    border: 1px solid #d9dee3;
+    border-radius: 0.375rem;
+    appearance: none;
+}

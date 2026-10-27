@@ -1,0 +1,108 @@
+/* Custom styles for Django admin with Materialize */
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge-success {
+  background-color: rgba(113, 221, 55, 0.16);
+  color: #71DD37;
+}
+
+.status-badge-warning {
+  background-color: rgba(255, 171, 0, 0.16);
+  color: #FFAB00;
+}
+
+.status-badge-danger {
+  background-color: rgba(255, 62, 29, 0.16);
+  color: #FF3E1D;
+}
+
+.status-badge-info {
+  background-color: rgba(3, 195, 236, 0.16);
+  color: #03C3EC;
+}
+
+/* Action buttons */
+.action-btn {
+  color: #697a8d;
+  font-size: 1.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.action-btn:hover {
+  color: #566a7f;
+}
+
+/* Category icons */
+.category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+}
+
+.category-icon-primary {
+  background-color: rgba(105, 108, 255, 0.16);
+  color: #696cff;
+}
+
+.category-icon-success {
+  background-color: rgba(113, 221, 55, 0.16);
+  color: #71DD37;
+}
+
+.category-icon-info {
+  background-color: rgba(3, 195, 236, 0.16);
+  color: #03C3EC;
+}
+
+.category-icon-warning {
+  background-color: rgba(255, 171, 0, 0.16);
+  color: #FFAB00;
+}
+
+/* Product image */
+.product-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+}
+
+/* Table customizations */
+.table > :not(caption) > * > * {
+  padding: 1rem 1.25rem;
+}
+
+/* Checkbox styling */
+.form-check .form-check-input {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Dropdown menu styling */
+.dropdown-menu {
+  box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
+}
+
+/* Pagination styling */
+.pagination .page-link {
+  border-radius: 0.375rem;
+  margin: 0 0.125rem;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #696cff;
+  border-color: #696cff;
+}

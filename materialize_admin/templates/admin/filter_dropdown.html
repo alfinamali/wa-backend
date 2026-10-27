@@ -1,0 +1,38 @@
+{% load i18n %}
+
+{% if cl.has_filters %}
+<div class="filter-selects mb-3">
+  <form id="changelist-filter" method="get" action=".">
+    <!-- Preserve search parameter if present -->
+    {% if cl.query %}
+      <input type="hidden" name="q" value="{{ cl.query }}">
+    {% endif %}
+    
+    {% for spec in cl.filter_specs %}
+      <div class="d-inline-block me-3 mb-2">
+        <label for="filter-{{ forloop.counter }}" class="form-label">{{ spec.title }}</label>
+        <select id="filter-{{ forloop.counter }}" class="form-select filter-select" data-filter-id="{{ forloop.counter }}">
+          {% for choice in spec.choices %}
+            <option value="{{ choice.query_string|iriencode }}" {% if choice.selected %}selected{% endif %}>
+              {{ choice.display }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endfor %}
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle filter selection changes
+    const filterSelects = document.querySelectorAll('.filter-select');
+    
+    filterSelects.forEach(select => {
+      select.addEventListener('change', function() {
+        window.location.href = this.value;
+      });
+    });
+  });
+</script>
+{% endif %}

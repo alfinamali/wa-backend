@@ -6,10 +6,22 @@ from rest_framework import serializers
 from .models import Contact, Conversation, Message, MessageTemplate, Outlet
 
 
-def digits(v):
+def normalize_wa(v, default_cc="62"):
+    """Nomor ke format WhatsApp (hanya angka, dengan kode negara). 0812... / 812... / +62 812... -> 62812..."""
     d = re.sub(r"\D", "", v or "")
-    if len(d) < 8:
-        raise serializers.ValidationError("Nomor tidak valid. Gunakan format internasional, mis. 62812xxxx.")
+    if d.startswith("00"):
+        d = d[2:]                      # 0062812... -> 62812...
+    elif d.startswith("0"):
+        d = default_cc + d[1:]         # 0812... -> 62812...
+    elif d.startswith("8") and len(d) <= 13:
+        d = default_cc + d             # 812... -> 62812...
+    return d
+
+
+def digits(v):
+    d = normalize_wa(v)
+    if len(d) < 10 or len(d) > 15:
+        raise serializers.ValidationError("Nomor tidak valid. Contoh: 0812xxxx atau +62 812xxxx.")
     return d
 
 

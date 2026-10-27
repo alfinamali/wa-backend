@@ -53,6 +53,10 @@ if os.environ.get("BEHIND_PROXY") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
+    # Tampilan /admin/ bergaya Materialize (dari backend-pusat). Urutan penting: harus di atas jazzmin & admin
+    # agar template-nya menimpa template bawaan.
+    "materialize_admin",
+    "jazzmin",
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
     "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
     "rest_framework", "rest_framework.authtoken", "corsheaders", "inbox",
@@ -125,3 +129,19 @@ AUTO_REPLY_COOLDOWN_HOURS = float(os.environ.get("AUTO_REPLY_COOLDOWN_HOURS", "1
 WA_GRAPH_BASE = os.environ.get("WA_GRAPH_BASE", "")  # kosong = https://graph.facebook.com (hanya diubah untuk pengujian)
 WA_APP_ID = os.environ.get("WA_APP_ID", "")                # App ID, untuk tukar code Embedded Signup
 WA_GRAPH_VERSION = os.environ.get("WA_GRAPH_VERSION", "v26.0")  # cek versi terbaru di dokumentasi Meta
+
+
+# ---- Tampilan /admin/ (materialize_admin + jazzmin) ----
+MATERIALIZE_ADMIN = {
+    "site_name": "Multi Outlet",
+    "logo": "images/logo.png",                  # static path
+    "menu": "config.admin_menu.get_menu_items",  # menu sidebar
+}
+JAZZMIN_SETTINGS = {
+    "site_title": "Multi Outlet Admin",
+    "site_header": "Multi Outlet",
+    "site_brand": "Multi Outlet",
+    "welcome_sign": "Masuk ke admin Multi Outlet",
+    "copyright": "Multi Outlet",
+    "show_ui_builder": False,
+}
