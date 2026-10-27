@@ -42,6 +42,7 @@ class Outlet(models.Model):
     history_sync_requested_at = models.DateTimeField(null=True, blank=True)
     history_progress = models.PositiveSmallIntegerField(default=0)  # 0-100 dari webhook history
     disconnected_reason = models.CharField(max_length=120, blank=True)  # diisi saat PARTNER_REMOVED
+    sync_blocked = models.CharField(max_length=255, blank=True)  # Meta menolak sinkron (sudah pernah diminta / lewat 24 jam)
     # Balasan otomatis. Pengganti pesan salam/away di aplikasi HP yang nonaktif saat coexistence.
     auto_reply = models.BooleanField(default=False)
     auto_reply_text = models.TextField(blank=True, default="Terima kasih sudah menghubungi kami. Tim kami akan segera membalas.")

@@ -1,3 +1,8 @@
+# Lingkungan lokal lengkap: PostgreSQL + Redis (realtime) + backend Django.
+#   cp .env.example .env   (isi WA_* sesuai kebutuhan)
+#   docker compose up -d --build
+#   docker compose exec web python manage.py createsuperuser
+# Backend: http://localhost:8000  |  cek realtime: docker compose logs -f web
 services:
   db:
     image: postgres:16-alpine
@@ -8,18 +13,37 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wa}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wa} -d ${DB_NAME:-wa}"]
       interval: 5s
       retries: 10
     restart: unless-stopped
+
+  # Siaran event realtime antar worker gunicorn. Tanpa Redis backend tetap jalan (cek database tiap 1 detik).
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]  # hanya pub/sub, tidak perlu disimpan ke disk
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
   web:
     build: .
     env_file: .env
     environment:
+      # nilai di sini menimpa .env, agar container memakai db & redis milik compose
+      DATABASE_URL: ""
       DB_HOST: db
+      DB_NAME: ${DB_NAME:-wa}
+      DB_USER: ${DB_USER:-wa}
+      DB_PASSWORD: ${DB_PASSWORD:-wa}
+      REDIS_URL: redis://redis:6379/0
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
+      redis: { condition: service_healthy }
     restart: unless-stopped
+
 volumes:
   pgdata:

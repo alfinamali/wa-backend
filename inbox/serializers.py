@@ -23,9 +23,9 @@ class OutletSerializer(serializers.ModelSerializer):
         model = Outlet
         fields = ["id", "name", "city", "display_number", "phone_number_id", "is_active", "unread", "waba_id",
                   "mode", "verified_name", "connected_at", "contacts_sync_requested_at", "history_sync_requested_at",
-                  "history_progress", "disconnected_reason", "members", "auto_reply", "auto_reply_text"]
+                  "history_progress", "disconnected_reason", "sync_blocked", "members", "auto_reply", "auto_reply_text"]
         read_only_fields = ["mode", "verified_name", "connected_at", "contacts_sync_requested_at",
-                            "history_sync_requested_at", "history_progress", "disconnected_reason"]
+                            "history_sync_requested_at", "history_progress", "disconnected_reason", "sync_blocked"]
 
 
 class ProfileUpdateSerializer(serializers.Serializer):

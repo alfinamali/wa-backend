@@ -494,3 +494,31 @@ class MediaTests(TestCase):
         self.client.post("/webhook/", raw, content_type="application/json", headers={"X-Hub-Signature-256": sig})
         m = Message.objects.get(wamid="wamid.doc")
         self.assertEqual((m.type, m.media_id, m.filename, m.mime_type, m.body), ("document", "DOC1", "invoice.pdf", "application/pdf", "Ini invoice"))
+
+
+@override_settings(WA_TOKEN="t")
+class SyncBlockedTests(TestCase):
+    def setUp(self):
+        self.api = APIClient()
+        self.api.force_authenticate(get_user_model().objects.create_user("adm", password="x", is_staff=True))
+        self.o = Outlet.objects.create(name="SAM", phone_number_id="PN1", display_number="1", mode="coexist",
+                                       connected_at=timezone.now())
+
+    @mock.patch("inbox.whatsapp.request_sync", side_effect=WhatsAppError("(#4) Application request limit reached"))
+    def test_limit_marks_blocked_and_stops_retrying(self, req):
+        r = self.api.post(f"/api/outlets/{self.o.id}/sync/")
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("sudah pernah diminta", r.data["detail"])
+        self.o.refresh_from_db()
+        self.assertIn("kontak dan riwayat chat", self.o.sync_blocked)
+        self.assertEqual(self.api.get("/api/outlets/").data[0]["sync_blocked"], self.o.sync_blocked)
+        r = self.api.post(f"/api/outlets/{self.o.id}/sync/")  # tidak memanggil Meta lagi
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("Business Platform", r.data["detail"])
+        self.assertEqual(req.call_count, 2)
+
+    @mock.patch("inbox.whatsapp.request_sync", side_effect=WhatsAppError("Tidak bisa menghubungi Meta: timeout"))
+    def test_temporary_error_is_not_blocked(self, req):
+        self.api.post(f"/api/outlets/{self.o.id}/sync/")
+        self.o.refresh_from_db()
+        self.assertEqual(self.o.sync_blocked, "")

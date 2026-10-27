@@ -293,9 +293,20 @@ def sync_templates():
 
 
 # ---------------- Onboarding (Embedded Signup) ----------------
+SYNC_LABEL = {"smb_app_state_sync": "kontak", "history": "riwayat chat"}
+SYNC_BLOCKED_MSG = ("Meta menolak sinkron {what}: untuk nomor ini sinkron sudah pernah diminta (hanya boleh sekali) "
+                    "atau sudah lewat 24 jam sejak terhubung.")
+
+
+def _sync_refused(err):
+    """Error yang tidak akan berubah bila diulang (bukan gangguan sementara)."""
+    t = str(err).lower()
+    return "(#4)" in t or "request limit" in t or "already" in t or "expired" in t
+
+
 def request_coexist_sync(outlet):
     """Minta Meta mengirim kontak + riwayat chat HP. Sekali saja, maksimal 24 jam setelah onboarding."""
-    errors = []
+    errors, refused = [], []
     for field, sync_type in (("contacts_sync_requested_at", "smb_app_state_sync"),
                              ("history_sync_requested_at", "history")):
         if getattr(outlet, field):
@@ -305,8 +316,16 @@ def request_coexist_sync(outlet):
             Outlet.objects.filter(pk=outlet.pk).update(**{field: timezone.now()})
             setattr(outlet, field, timezone.now())
         except whatsapp.WhatsAppError as e:
-            errors.append(f"{sync_type}: {e}")
-    return errors
+            log.warning("Sinkron %s untuk %s ditolak: %s", sync_type, outlet, e)
+            if _sync_refused(e):
+                refused.append(SYNC_LABEL[sync_type])
+            else:
+                errors.append(f"Sinkron {SYNC_LABEL[sync_type]} gagal: {e}")
+    blocked = SYNC_BLOCKED_MSG.format(what=" dan ".join(refused)) if refused else ""
+    if blocked != outlet.sync_blocked:
+        Outlet.objects.filter(pk=outlet.pk).update(sync_blocked=blocked)
+        outlet.sync_blocked = blocked
+    return errors + ([blocked] if blocked else [])
 
 
 def pick_waba(token):
@@ -387,6 +406,7 @@ def onboard(*, code, waba_id, phone_number_id, business_id="", event="", outlet=
         if coexist:  # onboarding ulang = jendela sinkron baru
             outlet.contacts_sync_requested_at = outlet.history_sync_requested_at = None
             outlet.history_progress = 0
+            outlet.sync_blocked = ""
         outlet.save()
 
     if coexist:

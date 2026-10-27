@@ -267,6 +267,9 @@ class OutletViewSet(viewsets.ModelViewSet):
         outlet = self.get_object()
         if outlet.mode != Outlet.Mode.COEXIST:
             return Response({"detail": "Outlet ini tidak terhubung dengan aplikasi WhatsApp Business."}, status=400)
+        if outlet.sync_blocked:
+            return Response({"detail": outlet.sync_blocked + " Untuk mengulang: putuskan nomor di HP "
+                             "(WhatsApp Business > Pengaturan > Akun > Business Platform), lalu Hubungkan ulang."}, status=409)
         errors = request_coexist_sync(outlet)
         body = {"errors": errors, "outlet": OutletSerializer(self.get_queryset().get(pk=outlet.pk)).data}
         if errors:
