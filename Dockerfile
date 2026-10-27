@@ -5,7 +5,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN SECRET_KEY=build python manage.py collectstatic --noinput \
- && adduser --disabled-password --no-create-home app && chown -R app /app
+ && adduser --disabled-password --gecos '' app && chown -R app /app
 USER app
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application -b 0.0.0.0:8000 --workers 3 --access-logfile -"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application -b 0.0.0.0:8000 --worker-class gthread --workers 2 --threads 32 --timeout 120 --access-logfile -"]

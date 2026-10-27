@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from . import whatsapp
 from .models import Contact, Conversation, Message, MessageTemplate, Outlet, WhatsAppAccount
+from .realtime import touch
 
 log = logging.getLogger(__name__)
 ORDER = {"queued": 0, "sent": 1, "delivered": 2, "read": 3, "failed": 4}
@@ -42,6 +43,14 @@ def _body(m):
     if mtype == "media_placeholder":
         return mtype, "[media]", ""
     return mtype, (data.get("caption") or f"[{mtype}]"), data.get("id", "")
+
+
+def _media_meta(m):
+    """mime_type & filename dari payload media WhatsApp (image/video/audio/document/sticker)."""
+    data = m.get(m.get("type", "text")) or {}
+    if not isinstance(data, dict) or not data.get("id"):
+        return {}
+    return {"mime_type": (data.get("mime_type") or "")[:120], "filename": (data.get("filename") or "")[:255]}
 
 
 def _contact(wa_id, name=""):
@@ -96,10 +105,9 @@ def save_inbound(outlet, contacts, m):
     mtype, body, media_id = _body(m)
     msg = Message.objects.create(
         conversation=conv, wamid=m["id"], direction="in", type=mtype, body=body, status="delivered",
-        media_id=media_id, created_at=at, source=Message.Source.CUSTOMER)
-    Conversation.objects.filter(pk=conv.pk).update(
-        unread_count=F("unread_count") + 1, last_message_at=at, last_inbound_at=at,
-        status=Conversation.Status.OPEN, updated_at=timezone.now())
+        media_id=media_id, created_at=at, source=Message.Source.CUSTOMER, **_media_meta(m))
+    touch(conv.pk, outlet.pk, "message",
+          unread_count=F("unread_count") + 1, last_message_at=at, last_inbound_at=at, status=Conversation.Status.OPEN)
     cooldown = timedelta(hours=settings.AUTO_REPLY_COOLDOWN_HOURS)
     if outlet.auto_reply and outlet.is_active and outlet.auto_reply_text.strip() and (not prev_in or at - prev_in >= cooldown):
         transaction.on_commit(lambda: send_auto_reply(conv.pk))
@@ -116,10 +124,11 @@ def send_auto_reply(conv_id):
         wamid = whatsapp.send_text(conv.outlet.phone_number_id, conv.contact.wa_id, text, token=conv.outlet.token)
     except whatsapp.WhatsAppError as e:
         Message.objects.filter(pk=msg.pk).update(status=Message.Status.FAILED, error_detail=str(e)[:255])
+        touch(conv.pk, conv.outlet_id, "status")
         log.warning("Balasan otomatis gagal (%s): %s", conv, e)
         return None
     Message.objects.filter(pk=msg.pk).update(wamid=wamid, status=Message.Status.SENT)
-    Conversation.objects.filter(pk=conv.pk).update(last_message_at=msg.created_at, updated_at=timezone.now())
+    touch(conv.pk, conv.outlet_id, "message", last_message_at=msg.created_at)
     return msg
 
 
@@ -137,9 +146,9 @@ def save_echo(outlet, m):
     mtype, body, media_id = _body(m)
     msg = Message.objects.create(
         conversation=conv, wamid=m["id"], direction="out", type=mtype, body=body, status="sent",
-        media_id=media_id, created_at=at, source=Message.Source.PHONE)
+        media_id=media_id, created_at=at, source=Message.Source.PHONE, **_media_meta(m))
     # dibalas dari HP = sudah ditangani; jangan tambah unread
-    Conversation.objects.filter(pk=conv.pk).update(last_message_at=at, unread_count=0, updated_at=timezone.now())
+    touch(conv.pk, outlet.pk, "message", last_message_at=at, unread_count=0)
     return msg
 
 
@@ -171,7 +180,7 @@ def save_history(outlet, h):
                 st = HISTORY_STATUS.get((m.get("history_context") or {}).get("status", "").upper(),
                                         "sent" if out else "delivered")
                 Message.objects.create(conversation=conv, wamid=m["id"], direction="out" if out else "in",
-                                       type=mtype, body=body, media_id=media_id, status=st, created_at=at,
+                                       type=mtype, body=body, media_id=media_id, status=st, created_at=at, **_media_meta(m),
                                        source=Message.Source.HISTORY)
                 n += 1
                 last_at = max(last_at, at) if last_at else at
@@ -179,12 +188,12 @@ def save_history(outlet, h):
                     last_in = max(last_in, at) if last_in else at
             if last_at:
                 c = Conversation.objects.get(pk=conv.pk)
-                upd = {"updated_at": timezone.now()}
+                upd = {}
                 if not c.last_message_at or last_at > c.last_message_at:
                     upd["last_message_at"] = last_at
                 if last_in and (not c.last_inbound_at or last_in > c.last_inbound_at):
                     upd["last_inbound_at"] = last_in
-                Conversation.objects.filter(pk=conv.pk).update(**upd)
+                touch(conv.pk, outlet.pk, "history", **upd)
     return n
 
 
@@ -231,7 +240,31 @@ def save_status(s):
         e = s["errors"][0]
         err = f'{e.get("code")}: {e.get("title")}'[:255]
     Message.objects.filter(pk=msg.pk).update(status=new, error_detail=err)
-    Conversation.objects.filter(pk=msg.conversation_id).update(updated_at=timezone.now())
+    touch(msg.conversation_id, kind="status")
+
+
+# ---------------- Media ----------------
+def open_media(msg):
+    """Ambil isi file sebuah pesan. Mengembalikan (iterator bytes, mime_type, ukuran|None).
+
+    Saat ini selalu dari Meta (URL sementara, diunduh dengan token outlet). Titik ini sengaja dipisah:
+    penyimpanan permanen (mis. Cloudflare R2) nanti cukup dicek di sini lebih dulu.
+    """
+    token = msg.conversation.outlet.token
+    info = whatsapp.media_info(msg.media_id, token)
+    up = whatsapp.download_media(info["url"], token)
+    mime = info.get("mime_type") or msg.mime_type or up.headers.get("Content-Type") or "application/octet-stream"
+    size = info.get("file_size") or up.headers.get("Content-Length")
+
+    def chunks():
+        try:
+            yield from up.iter_content(64 * 1024)
+        finally:
+            up.close()
+    if not msg.mime_type or (size and not msg.file_size):
+        Message.objects.filter(pk=msg.pk).update(mime_type=(msg.mime_type or mime)[:120],
+                                                 file_size=msg.file_size or (int(size) if size else None))
+    return chunks(), mime, (int(size) if size else None)
 
 
 # ---------------- Template ----------------

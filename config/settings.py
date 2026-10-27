@@ -42,6 +42,13 @@ CORS_ALLOWED_ORIGINS = [
     "https://wa-backend-production-96f0.up.railway.app",
     "https://dashboard-multi-whatsapp-production.up.railway.app",
 ]
+# Tambahan dari .env (dipisah koma), mis. ALLOWED_HOSTS=abcd.ngrok-free.app
+ALLOWED_HOSTS += [h for h in csv("ALLOWED_HOSTS") if h not in ALLOWED_HOSTS]
+CSRF_TRUSTED_ORIGINS += [h for h in csv("CSRF_TRUSTED_ORIGINS") if h not in CSRF_TRUSTED_ORIGINS]
+CORS_ALLOWED_ORIGINS += [h for h in csv("CORS_ALLOWED_ORIGINS") if h not in CORS_ALLOWED_ORIGINS]
+if DEBUG:  # pengembangan: terima semua domain ngrok (untuk webhook Meta ke backend lokal)
+    ALLOWED_HOSTS += [".ngrok-free.app", ".ngrok-free.dev", ".ngrok.app", ".ngrok.io"]
+
 if os.environ.get("BEHIND_PROXY") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -112,6 +119,9 @@ WA_TOKEN = os.environ.get("WA_TOKEN", "")                  # token System User
 WA_APP_SECRET = os.environ.get("WA_APP_SECRET", "")        # App Settings > Basic
 WA_VERIFY_TOKEN = os.environ.get("WA_VERIFY_TOKEN", "")    # string bebas buatan Anda
 WA_WABA_ID = os.environ.get("WA_WABA_ID", "")              # untuk sinkron template
+REDIS_URL = os.environ.get("REDIS_URL", "")  # opsional: realtime instan antar worker
+REALTIME_STREAM_SECONDS = int(os.environ.get("REALTIME_STREAM_SECONDS", "55"))  # umur satu koneksi SSE
 AUTO_REPLY_COOLDOWN_HOURS = float(os.environ.get("AUTO_REPLY_COOLDOWN_HOURS", "12"))  # jeda balasan otomatis per kontak
+WA_GRAPH_BASE = os.environ.get("WA_GRAPH_BASE", "")  # kosong = https://graph.facebook.com (hanya diubah untuk pengujian)
 WA_APP_ID = os.environ.get("WA_APP_ID", "")                # App ID, untuk tukar code Embedded Signup
 WA_GRAPH_VERSION = os.environ.get("WA_GRAPH_VERSION", "v26.0")  # cek versi terbaru di dokumentasi Meta

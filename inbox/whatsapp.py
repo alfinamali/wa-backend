@@ -17,7 +17,8 @@ class WhatsAppError(Exception):
 
 
 def _graph():
-    return f"https://graph.facebook.com/{settings.WA_GRAPH_VERSION}"
+    base = getattr(settings, "WA_GRAPH_BASE", "") or "https://graph.facebook.com"
+    return f"{base.rstrip('/')}/{settings.WA_GRAPH_VERSION}"
 
 
 def _headers(token=None):
@@ -70,6 +71,70 @@ def send_text(phone_number_id, to, text, token=None):
 def send_template(phone_number_id, to, name, language, token=None):
     return _send(phone_number_id, {"to": to, "type": "template",
                                    "template": {"name": name, "language": {"code": language}}}, token)
+
+
+# ---------------- Media ----------------
+# Batas dari Meta (Cloud API). Dipakai backend untuk validasi sebelum mengunggah.
+MEDIA_RULES = {
+    "image": ({"image/jpeg", "image/png"}, 5 * 1024 * 1024),
+    "video": ({"video/mp4", "video/3gpp"}, 16 * 1024 * 1024),
+    "audio": ({"audio/aac", "audio/amr", "audio/mpeg", "audio/mp4", "audio/ogg"}, 16 * 1024 * 1024),
+    "document": ({
+        "application/pdf", "text/plain", "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }, 100 * 1024 * 1024),
+}
+
+
+def media_kind(mime):
+    """Jenis pesan WhatsApp untuk sebuah MIME type, atau None bila tidak didukung."""
+    mime = (mime or "").split(";")[0].strip().lower()
+    for kind, (types, _limit) in MEDIA_RULES.items():
+        if mime in types:
+            return kind
+    return None
+
+
+def upload_media(phone_number_id, fileobj, filename, mime, token=None):
+    """Unggah file ke Meta. Mengembalikan media id (berlaku untuk dikirim dari nomor yang sama)."""
+    try:
+        r = requests.post(f"{_graph()}/{phone_number_id}/media", headers=_headers(token), timeout=(5, 120),
+                          data={"messaging_product": "whatsapp", "type": mime},
+                          files={"file": (filename, fileobj, mime)})
+    except requests.RequestException as e:
+        raise WhatsAppError(f"Gagal mengunggah file ke Meta: {e}") from e
+    data = _json(r)
+    if not r.ok or "id" not in data:
+        raise WhatsAppError(f"Gagal mengunggah file: {_err(data, r)}")
+    return data["id"]
+
+
+def send_media(phone_number_id, to, kind, media_id, caption="", filename="", token=None):
+    obj = {"id": media_id}
+    if caption and kind in ("image", "video", "document"):
+        obj["caption"] = caption
+    if kind == "document" and filename:
+        obj["filename"] = filename
+    return _send(phone_number_id, {"to": to, "type": kind, kind: obj}, token)
+
+
+def media_info(media_id, token=None):
+    """{url, mime_type, file_size, ...}. URL hanya berlaku beberapa menit dan wajib diunduh dengan token."""
+    return _call("GET", media_id, token)
+
+
+def download_media(url, token=None):
+    """Response requests (stream=True) untuk URL dari media_info. Pemanggil wajib menutupnya."""
+    try:
+        r = requests.get(url, headers=_headers(token), stream=True, timeout=(5, 60))
+    except requests.RequestException as e:
+        raise WhatsAppError(f"Gagal mengunduh file dari Meta: {e}") from e
+    if not r.ok:
+        r.close()
+        raise WhatsAppError(f"Gagal mengunduh file (HTTP {r.status_code})")
+    return r
 
 
 # ---------------- Template (per WABA) ----------------

@@ -17,5 +17,7 @@ urlpatterns = [
     path("me/", views.me),
     path("me/password/", views.change_password),
     path("stats/", views.stats),
+    path("events/", views.events),
+    path("media/<int:pk>/", views.media_file),
     *router.urls,
 ]

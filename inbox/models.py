@@ -133,6 +133,9 @@ class Message(models.Model):
     type = models.CharField(max_length=20, default="text")
     body = models.TextField(blank=True)
     media_id = models.CharField(max_length=128, blank=True)  # unduh lewat API; URL Meta cepat kedaluwarsa
+    mime_type = models.CharField(max_length=120, blank=True)
+    filename = models.CharField(max_length=255, blank=True)  # nama file dokumen
+    file_size = models.PositiveBigIntegerField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SENT)
     error_detail = models.CharField(max_length=255, blank=True)
     is_template = models.BooleanField(default=False)

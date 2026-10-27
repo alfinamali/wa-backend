@@ -97,7 +97,13 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ["id", "conversation", "direction", "type", "body", "status", "is_template", "source", "error_detail",
-                  "created_at", "contact_name", "outlet_name", "sent_by_name"]
+                  "created_at", "contact_name", "outlet_name", "sent_by_name",
+                  "has_media", "mime_type", "filename", "file_size"]
+
+    has_media = serializers.SerializerMethodField()
+
+    def get_has_media(self, m):
+        return bool(m.media_id)
 
 
 class ContactSerializer(serializers.ModelSerializer):
