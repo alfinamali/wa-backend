@@ -75,3 +75,4 @@ python manage.py test      # 12 tes: webhook, tanda tangan, idempotensi, aturan 
 - Antrean (Celery/Redis) untuk memproses webhook volume tinggi; saat ini diproses langsung di request.
 - Pembuatan template baru ke Meta lewat API (sekarang dibuat di WhatsApp Manager lalu disinkronkan).
 - Catatan internal, WebSocket/SSE, pagination, dan pelacakan biaya pesan per outlet.
+# wa-backend
